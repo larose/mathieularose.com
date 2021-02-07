@@ -1,0 +1,53 @@
+digraph prototype {
+rankdir = BT;
+// ratio = "auto" ;
+//mincross = 2.0 ;
+
+node [shape=box];
+
+null [shape=oval];
+
+"Object.prototype" [label="Object.prototype  §15.2.4"];
+"Function.prototype" [label="Function.prototype  §15.3.4"];
+
+
+{
+  rank = same;
+  "F";
+  "F.prototype";
+}
+
+/*
+{
+  rank = same;
+  "Function";
+  "Function.prototype";
+}
+*/
+
+/*
+{
+  rank = same;
+  "Object";
+  "Object.prototype";
+}
+*/
+
+// Object -> "Object.prototype" [style=bold];
+// Object -> "Function.prototype" [style=dashed];
+
+F -> "F.prototype" [style=bold];
+F -> "Function.prototype" [style=dashed];
+
+"F.prototype" -> "Object.prototype" [style=dashed];
+
+"Object.prototype" -> null [style=dashed];
+
+"Function.prototype" -> "Object.prototype" [style=dashed];
+
+// Function -> "Function.prototype" [style=bold];
+// Function -> "Function.prototype" [style=dashed];
+
+f -> "F.prototype" [style=dashed];
+}
+// object.prototype 15.2.4

@@ -1,0 +1,23 @@
+digraph prototype {
+  rankdir = BT;
+  ratio = "auto" ;
+  mincross = 2.0 ;
+
+  "a" [shape=box];
+  "b" [shape=box];
+  "c" [shape=box];
+
+  c -> "b" [style=dashed, labeljust=c];
+  "b" -> "a" [style=dashed, labeljust=c];
+  "a" -> "null" [style=dashed, labeljust=c];
+
+
+  subgraph clusterLegend { 
+    "[[Prototype]]" [shape=plaintext]
+     proto_inv [width=0,fixedsize=true,style=invis]; //[style=invis]
+    { 
+      rank=same
+      proto_inv -> "[[Prototype]]" [style=dashed, minlen=2, dir=none]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>javascript on Mathieu Larose</title>
+    <link>https://mathieularose.com/tags/javascript/</link>
+    <description>Recent content in javascript on Mathieu Larose</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 01 Jul 2014 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://mathieularose.com/tags/javascript/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>How Prototype Works in JavaScript</title>
+      <link>https://mathieularose.com/javascript-prototype/</link>
+      <pubDate>Tue, 01 Jul 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/javascript-prototype/</guid>
+      <description>A prototype in JavaScript is an object with a special role: it&amp;rsquo;s the parent of another object. And the role of a parent is to provide properties to its children.
+Let&amp;rsquo;s see how a prototype is linked to another object.
+Internal Property [[Prototype]] Every object has an internal property named [[Prototype]]. The value of [[Prototype]] is either a reference to another object or null. Example:
+Observations:
+ a has no prototype.</description>
+    </item>
+    
+  </channel>
+</rss>

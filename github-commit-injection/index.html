@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>GitHub Commit Injection - Mathieu Larose</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+		<meta property="og:title" content="GitHub Commit Injection" />
+<meta property="og:description" content="For those using GitHub Actions, how safe do you think it is to run the step actions/checkout@637523b962b8d2900f19acb38983d7243f64ba5c in your workflow? Example:
+jobs:build:runs-on:ubuntu-lateststeps:- uses:actions/checkout@637523b962b8d2900f19acb38983d7243f64ba5cLet&rsquo;s see:
+  The step uses the official checkout action which has the &ldquo;Verified creator&rdquo; badge.
+  The step specifies the full length commit SHA as recommended by GitHub:
+   Although pinning to a commit SHA is the most secure option, specifying a tag is more convenient and is widely used." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mathieularose.com/github-commit-injection/" />
+<meta property="article:published_time" content="2020-10-12T00:00:00+00:00" />
+<meta property="article:modified_time" content="2020-10-12T00:00:00+00:00" />
+
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+	<link rel="stylesheet" href="/css/style.css">
+	<link rel="stylesheet" href="/css/main.css">
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-37461978-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="Mathieu Larose" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">Mathieu Larose</div>
+					
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">Menu</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/posts/">
+				
+				<span class="menu__text">Posts</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/projects/">
+				
+				<span class="menu__text">Projects</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/about/">
+				
+				<span class="menu__text">About</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">GitHub Commit Injection</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0C7 0 1 6 1 14s6 14 14 14 14-6 14-14S23 0 15 0zm0 25C9 25 4 20 4 14S9 3 15 3s11 5 11 11-5 11-11 11zm1-18h-2v8.4l6.8 4.4L22 18l-6-3.8V7z"/></svg><time class="meta__text" datetime="2020-10-12T00:00:00Z">October 2020</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2l1 2h8v11h-16v-13z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/articles/" rel="category">articles</a>
+	</span>
+</div></div>
+		</header><div class="content post__content clearfix">
+			<p>For those using <a href="https://github.com/features/actions">GitHub Actions</a>, how safe
+do you think it is to run the step
+<code>actions/checkout@637523b962b8d2900f19acb38983d7243f64ba5c</code> in your workflow?
+Example:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#007020;font-weight:bold">jobs</span>:<span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#007020;font-weight:bold">build</span>:<span style="color:#bbb">
+</span><span style="color:#bbb">    </span><span style="color:#007020;font-weight:bold">runs-on</span>:<span style="color:#bbb"> </span>ubuntu-latest<span style="color:#bbb">
+</span><span style="color:#bbb">
+</span><span style="color:#bbb">    </span><span style="color:#007020;font-weight:bold">steps</span>:<span style="color:#bbb">
+</span><span style="color:#bbb">      </span>- <span style="color:#007020;font-weight:bold">uses</span>:<span style="color:#bbb"> </span>actions/checkout@637523b962b8d2900f19acb38983d7243f64ba5c<span style="color:#bbb">
+</span></code></pre></div><p>Let&rsquo;s see:</p>
+<ol>
+<li>
+<p>The step uses the official <a href="https://github.com/marketplace/actions/checkout">checkout
+action</a> which has the &ldquo;Verified
+creator&rdquo; badge.</p>
+</li>
+<li>
+<p>The step specifies the full length commit SHA as <a href="https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/security-hardening-for-github-actions#using-third-party-actions">recommended by
+GitHub</a>:</p>
+</li>
+</ol>
+<blockquote>
+<p>Although pinning to a commit SHA is the most secure option, specifying a tag
+is more convenient and is widely used. If you’d like to specify a tag, then be
+sure that you trust the action&rsquo;s creators. The ‘Verified creator’ badge on
+GitHub Marketplace is a useful signal, as it indicates that the action was
+written by a team whose identity has been verified by GitHub.</p>
+</blockquote>
+<ol start="3">
+<li>You can <a href="https://github.com/actions/checkout/tree/637523b962b8d2900f19acb38983d7243f64ba5c">browse the version in the official
+repo</a>.</li>
+</ol>
+<p>So, is <code>637523b962b8d2900f19acb38983d7243f64ba5c</code> safe to use?</p>
+<p>Well, no. Despite all appearances, that version has not been approved by its
+owners. It&rsquo;s not even in the official git repo. But, I was able to <em>inject</em> it
+to <code>actions/checkout</code> anyway. The code snippet above does work and would execute
+my version of <code>actions/checkout</code> if run.</p>
+<p>If you look closely, I modified the <a href="https://github.com/actions/checkout/commit/e6b043bab47c1f991a2471bdad20bd945a3b7c4d">second to last
+commit</a>
+so the action displays a message at startup, but it could have been a backdoor
+to steal your source code or secrets.</p>
+<p>How did I injected a version into the official checkout action? Easy:</p>
+<p>Step 1: Fork the <a href="https://github.com/actions/checkout">official repo</a> to your
+account. Example: <a href="https://github.com/larose/checkout">larose/checkout</a>.</p>
+<p>Step 2: Push a commit to your forked repo. Example:
+<a href="https://github.com/larose/checkout/tree/commit-injection-demo">larose/checkout/tree/commit-injection-demo</a>.</p>
+<p>Any commits pushed to your forked repo is now available for use as a version for
+<code>actions/checkout</code> in <em>any</em> GitHub repos. The reason is that commits in the
+parent repo and its forks are stored together in the same commit pool. Contrary
+to branches and tags which are stored separately for each fork.</p>
+<p>I reached out to GitHub about this issue and they replied that:</p>
+<blockquote>
+<p>This is an intentional design decision and is working as expected. We may make
+this functionality more strict in the future, but don&rsquo;t have anything to
+announce right now.</p>
+</blockquote>
+<p>So until then, be careful when pinning a third-party action to a full length
+commit SHA. Always check that it belongs to the main branch of the official
+action repo.</p>
+<p>Also, an alternate approach could be to copy (not fork) the repo of a
+third-party action, audit its source code and then pin it to the full length
+commit SHA.</p>
+<p>Happy coding!</p>
+
+		</div>
+	</article>
+</main>
+
+<div class="authorbox clearfix">
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Me</span>
+	</div>
+	<div class="authorbox__description">
+		Hi, I&rsquo;m Mathieu Larose - an experienced and enthusiastic tech lead based in Montreal. I tend to work on backend systems and devops, but I enjoy all kinds of software development. I have a B.Sc. and M.Sc. in Computer Science.
+	</div>
+</div>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/plugin-architecture-in-python/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">How to Design and Implement a Plugin Architecture in Python</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/unicode-and-utf-8/" rel="next">
+			<span class="pager__subtitle">Next&thinsp;»</span>
+			<p class="pager__title">Unicode and UTF-8</p>
+		</a>
+	</div>
+</nav>
+
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+<div class="footer__links">
+	<a class="footer__link" href="/index.xml">RSS</a>
+</div>
+		<div class="footer__copyright">
+			&copy; 2021 Mathieu Larose.
+			<span class="footer__copyright-credits"> </span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

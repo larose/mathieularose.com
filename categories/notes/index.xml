@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>notes on Mathieu Larose</title>
+    <link>https://mathieularose.com/categories/notes/</link>
+    <description>Recent content in notes on Mathieu Larose</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 13 Dec 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://mathieularose.com/categories/notes/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Unicode and UTF-8</title>
+      <link>https://mathieularose.com/unicode-and-utf-8/</link>
+      <pubDate>Sun, 13 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/unicode-and-utf-8/</guid>
+      <description>Confused about Unicode and UTF-8? Don&amp;rsquo;t worry, you are not alone. Unicode and UTF-8 are probably one of the most confused pairs of words in software development. Even for some seasoned software developers.
+The objective of this post is to demystify Unicode and UTF-8 so you become comfortable working with them. We will do so by looking at a concise explanation of Unicode and UTF-8, and at a concrete example in Python.</description>
+    </item>
+    
+    <item>
+      <title>Main function in Node.js</title>
+      <link>https://mathieularose.com/main-function-in-node-js/</link>
+      <pubDate>Sun, 21 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/main-function-in-node-js/</guid>
+      <description>Unlike most other programming languages or runtime environments, Node.js doesn&amp;rsquo;t have a built-in special main function to designate the entry point of a program. But there is an easy way to achieve this in Node.js, which we will show in this article.
+The pattern is to check if the current module is the main module: require.main === module. If this is true, the current file has been run directly - as opposed to have been imported by another file - and in this case we can call the main function.</description>
+    </item>
+    
+    <item>
+      <title>Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen</title>
+      <link>https://mathieularose.com/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen/</link>
+      <pubDate>Sun, 05 Apr 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen/</guid>
+      <description>The audio, microphone and wifi don&amp;rsquo;t work out of the box with Ubuntu 19.10 on a Lenovo ThinkPad X1 Carbon 7th Gen laptop. Here are the steps I made to fix them.
+ Update: I upgraded to Ubuntu 20.04 and now everything works with the default settings. I&amp;rsquo;m on kernel 5.4.0-26-generic and reverted my changes to /etc/modprobe.d/blacklist.conf and /etc/pulse/default.pa (steps 3 and 4 below).
+ Note 1: Even if I tried to make as little customization as possible to make the upgrade easy to Ubuntu 20.</description>
+    </item>
+    
+    <item>
+      <title>How to Log in JSON with Logback</title>
+      <link>https://mathieularose.com/logback-json/</link>
+      <pubDate>Sat, 26 May 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/logback-json/</guid>
+      <description>Complete example of how to log in JSON with Logback.</description>
+    </item>
+    
+    <item>
+      <title>How to Debug OpenSSL with Eclipse</title>
+      <link>https://mathieularose.com/how-to-debug-openssl-with-eclipse/</link>
+      <pubDate>Sun, 17 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/how-to-debug-openssl-with-eclipse/</guid>
+      <description>Step-by-step instructions on how to debug OpenSSL with Eclipse.</description>
+    </item>
+    
+    <item>
+      <title>Decoding CAPTCHAs</title>
+      <link>https://mathieularose.com/decoding-captchas/</link>
+      <pubDate>Fri, 25 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/decoding-captchas/</guid>
+      <description>There are two types of CAPTCHAs. Those that are solved by bots and those that will eventually be solved by bots.
+It&amp;rsquo;s hard to tell if a CAPTCHA is secured or not. But, if the text-based CAPTCHA on your website can be decoded with two lines of code (as shown in this article), it&amp;rsquo;s time to upgrade it.
+Approach Two-line approach:
+  Preprocess the image with convert (ImageMagick).
+  Use Tesseract - an OCR engine - to extract the text from the image.</description>
+    </item>
+    
+  </channel>
+</rss>

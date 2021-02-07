@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Understanding Python Variables - Mathieu Larose</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+		<meta property="og:title" content="Understanding Python Variables" />
+<meta property="og:description" content="In this article, you will learn the behavior of variables in Python and, in particular, the semantics of the assignment operator (=).
+Variables or names? Just before we start, I would like to tell you that what you call a variable in other programming languages is called a name in Python.
+Of course not everyone agrees with that, as you can see in this thread. But the official documentation and almost all articles written on the execution model of Python use the word name, so I&rsquo;ll use it here as well." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mathieularose.com/python-variables/" />
+<meta property="article:published_time" content="2015-12-01T00:00:00+00:00" />
+<meta property="article:modified_time" content="2015-12-01T00:00:00+00:00" />
+
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+	<link rel="stylesheet" href="/css/style.css">
+	<link rel="stylesheet" href="/css/main.css">
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-37461978-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="Mathieu Larose" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">Mathieu Larose</div>
+					
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">Menu</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/posts/">
+				
+				<span class="menu__text">Posts</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/projects/">
+				
+				<span class="menu__text">Projects</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/about/">
+				
+				<span class="menu__text">About</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">Understanding Python Variables</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0C7 0 1 6 1 14s6 14 14 14 14-6 14-14S23 0 15 0zm0 25C9 25 4 20 4 14S9 3 15 3s11 5 11 11-5 11-11 11zm1-18h-2v8.4l6.8 4.4L22 18l-6-3.8V7z"/></svg><time class="meta__text" datetime="2015-12-01T00:00:00Z">December 2015</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2l1 2h8v11h-16v-13z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/articles/" rel="category">articles</a>
+	</span>
+</div></div>
+		</header><div class="content post__content clearfix">
+			<p>In this article, you will learn the behavior of variables in Python
+and, in particular, the semantics of the assignment operator (<code>=</code>).</p>
+<h2 id="variables-or-names">Variables or names?</h2>
+<p>Just before we start, I would like to tell you that what you call a
+variable in other programming languages is called a name in Python.</p>
+<p>Of course not everyone agrees with that, as you can see in this
+<a href="https://mail.python.org/pipermail/python-list/2014-May/671459.html">thread</a>.
+But the
+<a href="https://docs.python.org/3/reference/executionmodel.html">official documentation</a>
+and almost all articles written on the execution model of Python use
+the word name, so I&rsquo;ll use it here as well.</p>
+<h2 id="name-binding">Name binding</h2>
+<p>Python has
+<a href="https://en.wikipedia.org/wiki/Name_binding">name binding</a>. Name
+binding is the association between a name and an object (value). So in
+Python, we bind (or attach) a name to an object.</p>
+<p>One way to bind a name to an object is to use the assignment operator
+(<code>=</code>). For example, the following code binds the name <code>x</code> to the
+object <code>1</code> (an integer whose value is 1):</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> x <span style="color:#666">=</span> <span style="color:#40a070">1</span>
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> </code></pre></div>
+<p>After this assignment, the state of the Python interpreter is:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">x <span style="color:#666">---&gt;</span> <span style="color:#40a070">1</span></code></pre></div>
+<p>It has 1 name (<code>x</code>) and 1 object (<code>1</code>).</p>
+<p>When you enter a name in Python, it gives you back the object
+bound to it.</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> x
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#40a070">1</span>
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> </code></pre></div>
+<p>This means: give me the object bound to the name <code>x</code>. Python answers
+with <code>1</code>.</p>
+<p>Let&rsquo;s bind another name:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> y <span style="color:#666">=</span> <span style="color:#40a070">2</span>
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> </code></pre></div>
+<p>Python creates a name <code>y</code> and an object <code>2</code> and binds <code>y</code> to <code>2</code>.</p>
+<p>State:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">x <span style="color:#666">---&gt;</span> <span style="color:#40a070">1</span>
+y <span style="color:#666">---&gt;</span> <span style="color:#40a070">2</span></code></pre></div>
+<p>It has 2 names (<code>x</code> and <code>y</code>) and 2 objects (<code>1</code> and <code>2</code>).</p>
+<p>So far we used objects (<code>1</code> and <code>2</code>) on the right-hand side of the <code>=</code>
+operator (<code>x = 1</code> and <code>y = 2</code>). Here is what happens when we use a
+name on the right-hand side of the <code>=</code> operator:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> z <span style="color:#666">=</span> x
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> </code></pre></div>
+<p>This means: bind the name <code>z</code> to the object bound to the name <code>x</code>.</p>
+<p>State:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">x <span style="color:#666">---&gt;</span> <span style="color:#40a070">1</span> <span style="color:#666">&lt;---</span> z
+y <span style="color:#666">---&gt;</span> <span style="color:#40a070">2</span></code></pre></div>
+<p>It has 3 names and 2 objects.</p>
+<p>Python created a name <code>z</code> and bound it to the object <code>1</code>, the object
+bound to <code>x</code>. Note that Python didn&rsquo;t create or copy the object <code>1</code>,
+it only introduced a new name for that object. So both <code>x</code> and <code>z</code> are
+bound to the object <code>1</code>.</p>
+<p>Remember, a name can only be bound to an object, not to a name.</p>
+<p>Next:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> x <span style="color:#666">=</span> y
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> </code></pre></div>
+<p>This means: bind the name <code>x</code> to the object bound to the name
+<code>y</code>. Since <code>x</code> was already bound to the object <code>1</code>, we say that we
+rebound <code>x</code>.</p>
+<p>State:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#40a070">1</span> <span style="color:#666">&lt;---</span> z
+y <span style="color:#666">---&gt;</span> <span style="color:#40a070">2</span> <span style="color:#666">&lt;---</span> x</code></pre></div>
+<p>It has 3 names and 2 objects.</p>
+<p><code>x</code> is now bound to the object <code>2</code>.</p>
+<p>Note that <code>x = y</code> doesn&rsquo;t involve <code>z</code>, even though we previously did
+<code>z = x</code>. So <code>z</code> is still bound to the object <code>1</code>.</p>
+<h2 id="modifying-an-object">Modifying an object</h2>
+<p>So far we used immutable objects (integers). Let&rsquo;s see an example with
+a list.</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> a <span style="color:#666">=</span> [<span style="color:#40a070">1</span>, <span style="color:#40a070">2</span>]
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> b <span style="color:#666">=</span> a
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> </code></pre></div>
+<p>State:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">a <span style="color:#666">---&gt;</span> [<span style="color:#40a070">1</span>, <span style="color:#40a070">2</span>] <span style="color:#666">&lt;---</span> b</code></pre></div>
+<p>It has 2 names (<code>a</code> and <code>b</code>) and 1 object (<code>[1, 2]</code>).</p>
+<p>Let&rsquo;s execute this line:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> a<span style="color:#666">.</span>append(<span style="color:#40a070">3</span>)
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> </code></pre></div>
+<p>State:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">a <span style="color:#666">---&gt;</span> [<span style="color:#40a070">1</span>, <span style="color:#40a070">2</span>, <span style="color:#40a070">3</span>] <span style="color:#666">&lt;---</span> b</code></pre></div>
+<p><code>a.append(3)</code> doesn&rsquo;t bind (or rebind) a name, it simply modifies
+(mutates) an object. It modifies <code>[1, 2]</code>, the object bound to the
+name <code>a</code>. So the names <code>a</code> and <code>b</code> are still bound to the same object,
+but that object has been modified. It has now three elements:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> a
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> [<span style="color:#40a070">1</span>, <span style="color:#40a070">2</span>, <span style="color:#40a070">3</span>]
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> b
+<span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> [<span style="color:#40a070">1</span>, <span style="color:#40a070">2</span>, <span style="color:#40a070">3</span>] <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> <span style="color:#666">&gt;</span> </code></pre></div>
+<p>Now what happens when we execute the following code?</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">b <span style="color:#666">=</span> [<span style="color:#40a070">10</span>]</code></pre></div>
+<p>Is the name <code>a</code> bound to the object <code>[10]</code>? You can find the answer on
+<a href="http://pythontutor.com/visualize.html#code=a+%3D+%5B1,+2%5D%0Ab+%3D+a%0Aa.append(3%29%0Ab+%3D+%5B10%5D&amp;mode=display&amp;origin=opt-frontend.js&amp;cumulative=false&amp;heapPrimitives=false&amp;textReferences=false&amp;py=3&amp;rawInputLstJSON=%5B%5D&amp;curInstr=0)">Python Tutor</a>.</p>
+
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M32 19c0 1-1 2-1 2L21 31s-1 1-2 1-2-1-2-1L2 16c-1-1-1.4-2-1.4-2S0 12.5 0 11V3C0 1.5.8.8.8.8S1.5 0 3 0h8c1.5 0 3 .6 3 .6S15 1 16 2l15 15s1 1 1 2zM7 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/python/" rel="tag">python</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div class="authorbox clearfix">
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Me</span>
+	</div>
+	<div class="authorbox__description">
+		Hi, I&rsquo;m Mathieu Larose - an experienced and enthusiastic tech lead based in Montreal. I tend to work on backend systems and devops, but I enjoy all kinds of software development. I have a B.Sc. and M.Sc. in Computer Science.
+	</div>
+</div>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/javascript-prototype/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">How Prototype Works in JavaScript</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/decoding-captchas/" rel="next">
+			<span class="pager__subtitle">Next&thinsp;»</span>
+			<p class="pager__title">Decoding CAPTCHAs</p>
+		</a>
+	</div>
+</nav>
+
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+<div class="footer__links">
+	<a class="footer__link" href="/index.xml">RSS</a>
+</div>
+		<div class="footer__copyright">
+			&copy; 2021 Mathieu Larose.
+			<span class="footer__copyright-credits"> </span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

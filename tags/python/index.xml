@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>python on Mathieu Larose</title>
+    <link>https://mathieularose.com/tags/python/</link>
+    <description>Recent content in python on Mathieu Larose</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 19 Jul 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://mathieularose.com/tags/python/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>How to Design and Implement a Plugin Architecture in Python</title>
+      <link>https://mathieularose.com/plugin-architecture-in-python/</link>
+      <pubDate>Sun, 19 Jul 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/plugin-architecture-in-python/</guid>
+      <description>We tend to think that plugin-based architectures are hard to develop. And that is certainly true for many advanced plugin-based architectures such as those for browsers. But sometimes we may be looking for a simple yet powerful plugin-based architecture. If that&amp;rsquo;s your case, then read on. I&amp;rsquo;ll show you how to design and implement one in Python.
+I&amp;rsquo;ll explain how I designed utt&amp;rsquo;s plugin system and how you can apply the same pattern to your application.</description>
+    </item>
+    
+    <item>
+      <title>Understanding Python Variables</title>
+      <link>https://mathieularose.com/python-variables/</link>
+      <pubDate>Tue, 01 Dec 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/python-variables/</guid>
+      <description>In this article, you will learn the behavior of variables in Python and, in particular, the semantics of the assignment operator (=).
+Variables or names? Just before we start, I would like to tell you that what you call a variable in other programming languages is called a name in Python.
+Of course not everyone agrees with that, as you can see in this thread. But the official documentation and almost all articles written on the execution model of Python use the word name, so I&amp;rsquo;ll use it here as well.</description>
+    </item>
+    
+    <item>
+      <title>Choosing the Right Data Structures</title>
+      <link>https://mathieularose.com/choosing-the-right-data-structures/</link>
+      <pubDate>Thu, 01 Aug 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/choosing-the-right-data-structures/</guid>
+      <description>About a year ago, I was using NetworkX (a Python package for studying graphs) for one of my projects. While I was working on it, I found that the topological sort implementation in NetworkX was very slow on large-scale instances. So I decided to take a look at it, hoping I can figure out what&amp;rsquo;s wrong and fix it. In the end, I sped up considerably the implementation. Here is how I did it.</description>
+    </item>
+    
+    <item>
+      <title>Function Composition in Python</title>
+      <link>https://mathieularose.com/function-composition-in-python/</link>
+      <pubDate>Tue, 01 Jan 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/function-composition-in-python/</guid>
+      <description>While I don&amp;rsquo;t consider myself a functional programming expert, all those hours spent in Haskell, Lisp and Scheme definitively changed my way of programming. So, after seeing a lot of unnecessarily complex implementations of function composition in Python on the Web, I decided to write this article to present a simple yet powerful solution that covers all use cases. If you are familiar with function composition, you may want to go to the solution.</description>
+    </item>
+    
+    <item>
+      <title>How Not to Flatten a List of Lists in Python</title>
+      <link>https://mathieularose.com/how-not-to-flatten-a-list-of-lists-in-python/</link>
+      <pubDate>Tue, 01 Jan 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/how-not-to-flatten-a-list-of-lists-in-python/</guid>
+      <description>You will find lots of solutions on the Web to flatten a list of lists in Python. Most of them take linear time, which is efficient because each element is copied once. But some solutions take more than linear time. In this article, I will explain why one of the simplest solution sum(lst, []) is actually one of the worst solution.
+The inefficiency comes from how the + operator (concatenation) is defined on a list: it creates a new list and copies each element into it.</description>
+    </item>
+    
+  </channel>
+</rss>

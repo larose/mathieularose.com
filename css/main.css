@@ -1,0 +1,15 @@
+img.project {
+  border: thin solid lightgrey;
+}
+
+body {
+  font-size: 18px;
+}
+
+.container {
+  max-width: 900px;
+}
+
+.widget-social__link {
+  font-size: 13px;
+}

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>How to Design and Implement a Plugin Architecture in Python - Mathieu Larose</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+		<meta property="og:title" content="How to Design and Implement a Plugin Architecture in Python" />
+<meta property="og:description" content="We tend to think that plugin-based architectures are hard to develop. And that is certainly true for many advanced plugin-based architectures such as those for browsers. But sometimes we may be looking for a simple yet powerful plugin-based architecture. If that&rsquo;s your case, then read on. I&rsquo;ll show you how to design and implement one in Python.
+I&rsquo;ll explain how I designed utt&rsquo;s plugin system and how you can apply the same pattern to your application." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mathieularose.com/plugin-architecture-in-python/" />
+<meta property="article:published_time" content="2020-07-19T00:00:00+00:00" />
+<meta property="article:modified_time" content="2020-07-19T00:00:00+00:00" />
+
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+	<link rel="stylesheet" href="/css/style.css">
+	<link rel="stylesheet" href="/css/main.css">
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-37461978-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="Mathieu Larose" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">Mathieu Larose</div>
+					
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">Menu</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/posts/">
+				
+				<span class="menu__text">Posts</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/projects/">
+				
+				<span class="menu__text">Projects</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/about/">
+				
+				<span class="menu__text">About</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">How to Design and Implement a Plugin Architecture in Python</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0C7 0 1 6 1 14s6 14 14 14 14-6 14-14S23 0 15 0zm0 25C9 25 4 20 4 14S9 3 15 3s11 5 11 11-5 11-11 11zm1-18h-2v8.4l6.8 4.4L22 18l-6-3.8V7z"/></svg><time class="meta__text" datetime="2020-07-19T00:00:00Z">July 2020</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2l1 2h8v11h-16v-13z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/articles/" rel="category">articles</a>
+	</span>
+</div></div>
+		</header><div class="content post__content clearfix">
+			<p>We tend to think that plugin-based architectures are hard to develop. And that
+is certainly true for many advanced plugin-based architectures such as those for
+browsers. But sometimes we may be looking for a simple yet powerful plugin-based
+architecture. If that&rsquo;s your case, then read on. I&rsquo;ll show you how to design and
+implement one in Python.</p>
+<p>I&rsquo;ll explain how I designed <a href="https://github.com/larose/utt">utt</a>&rsquo;s plugin system
+and how you can apply the same pattern to your application.</p>
+<h2 id="a-simple-plugin-system-in-python">A simple plugin system in Python</h2>
+<p>There are two key questions to address in a plugin architecture:</p>
+<ul>
+<li>Plugin discovery: how does the application discover and load plugins?</li>
+<li>Application API: how do the plugins interact with the application?</li>
+</ul>
+<p>In our simple plugin system, these two problems are solved by putting packages
+into specific namespaces. Plugins go into the <code>app.plugins</code> namespace and the
+API under <code>app.api</code>, where <code>app</code> is the name of the application.</p>
+<p>At startup, the application discovers and loads plugins by asking Python all
+packages registered under the <code>app.plugins</code> namespace. So all packages whose
+names match <code>app.plugins.*</code>. And when plugins are loaded by the application,
+they import the application API at <code>app.api</code>.</p>
+<p>For example, if there were two plugins for the application installed on the
+system, foo and bar, they would be located in the <code>app.plugins.foo</code> and
+<code>app.plugins.bar</code> namespaces.</p>
+<p>This package naming convention allows the application and the plugins to know
+about each other, even though they are not necessary maintained and distributed
+by the same person. For example, the application could be maintained in its own
+git repo and distributed under its own package on PyPI, while each plugin can be
+maintained in their own git repo and distributed in their own package on PyPI.</p>
+<p>We can say that the application and the plugins form together a virtual package
+(e.g. <code>app</code>), composed of many physical packages (e.g. <code>app.api</code>,
+<code>app.plugins.foo</code> and <code>app.plugins.bar</code>).</p>
+<p>Here is an example of a namespace hierarchy that follows the package naming
+convention we&rsquo;ve just described and who is responsible for providing each
+package:</p>
+<p><img src="plugin-architecture.png" alt=""></p>
+<h2 id="utt">utt</h2>
+<p>Let&rsquo;s now see how <a href="https://github.com/larose/utt">utt</a> implements such plugin
+system.</p>
+<p>The main package in utt is <code>utt</code>. So as expected, utt&rsquo;s plugins are located
+under the <code>utt.plugins</code> namespace and utt&rsquo;s API under <code>utt.api</code>.</p>
+<h3 id="plugin-discovery">Plugin discovery</h3>
+<p>Here is how utt discovers and loads plugins at startup:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#007020;font-weight:bold">import</span> <span style="color:#0e84b5;font-weight:bold">importlib</span>
+<span style="color:#007020;font-weight:bold">import</span> <span style="color:#0e84b5;font-weight:bold">pkgutil</span>
+<span style="color:#007020;font-weight:bold">import</span> <span style="color:#0e84b5;font-weight:bold">sys</span>
+<span style="color:#007020;font-weight:bold">import</span> <span style="color:#0e84b5;font-weight:bold">utt.plugins</span>
+
+<span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">iter_namespace</span>(ns_pkg):
+    <span style="color:#007020;font-weight:bold">return</span> pkgutil<span style="color:#666">.</span>iter_modules(ns_pkg<span style="color:#666">.</span>__path__, ns_pkg<span style="color:#666">.</span>__name__ <span style="color:#666">+</span> <span style="color:#4070a0">&#34;.&#34;</span>)
+
+<span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">load_plugins</span>():
+    <span style="color:#007020;font-weight:bold">for</span> _, name, _ <span style="color:#007020;font-weight:bold">in</span> iter_namespace(utt<span style="color:#666">.</span>plugins):
+        importlib<span style="color:#666">.</span>import_module(name)
+
+<span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">main</span>():
+    load_plugins()
+    <span style="color:#666">...</span>
+</code></pre></div><p>The <code>iter_namespace</code> function finds all packages under the <code>ns_pkg</code> namespace
+(i.e. <code>utt.plugins</code>) and the <code>load_plugins</code> function imports them.</p>
+<p>Source: <a href="https://github.com/larose/utt/blob/master/utt/main.py">https://github.com/larose/utt/blob/master/utt/main.py</a></p>
+<h3 id="applications-api">Application&rsquo;s API</h3>
+<p>utt exposes its API (currently at v1) under the
+<a href="https://github.com/larose/utt/tree/master/utt/api"><code>utt.api</code></a> namespace:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#60a0b0;font-style:italic"># This file contains the classes, functions and constants</span>
+<span style="color:#60a0b0;font-style:italic"># that can be used by plugins.</span>
+
+<span style="color:#007020;font-weight:bold">from</span> <span style="color:#0e84b5;font-weight:bold">...command</span> <span style="color:#007020;font-weight:bold">import</span> Command
+<span style="color:#007020;font-weight:bold">from</span> <span style="color:#0e84b5;font-weight:bold">._private</span> <span style="color:#007020;font-weight:bold">import</span> register_command, register_component
+
+<span style="color:#666">...</span>
+</code></pre></div><p>Source: <a href="https://github.com/larose/utt/blob/master/utt/api/_v1/__init__.py">https://github.com/larose/utt/blob/master/utt/api/_v1/__init__.py</a></p>
+<p>The symbols exported in the file above are the ones that can be used by plugins.
+For example, the following plugin registers a new utt command (foo) through the
+<code>register_command</code> function exported in utt&rsquo;s API:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#007020;font-weight:bold">from</span> <span style="color:#0e84b5;font-weight:bold">utt.api</span> <span style="color:#007020;font-weight:bold">import</span> v1
+
+<span style="color:#007020;font-weight:bold">class</span> <span style="color:#0e84b5;font-weight:bold">FooHandler</span>:
+    <span style="color:#666">...</span>
+
+foo_command <span style="color:#666">=</span> v1<span style="color:#666">.</span>Command(name<span style="color:#666">=</span><span style="color:#4070a0">&#34;foo&#34;</span>, handler_class<span style="color:#666">=</span>FooHandler, <span style="color:#666">...</span>)
+
+v1<span style="color:#666">.</span>register_command(foo_command)
+</code></pre></div><p>Source: <a href="https://github.com/larose/utt/blob/master/test/integration/utt_example_plugin/utt/plugins/foo_command.py">https://github.com/larose/utt/blob/master/test/integration/utt_example_plugin/utt/plugins/foo_command.py</a></p>
+<h2 id="conclusion">Conclusion</h2>
+<p>That&rsquo;s basically all you need to know to develop your own plugin architecture in
+Python.</p>
+<p>Note that plugins can also be maintained and distributed within the same git
+repo and PyPI package of the application. This is what utt does for its built-in
+commands: they are just
+<a href="https://github.com/larose/utt/tree/master/utt/plugins">plugins</a>.</p>
+<p>Finally, a technique very useful when developing a plugin architecture is
+<a href="https://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a>.
+Dependency injection allows to easily override certain behaviors at runtime,
+depending on the configuration loaded (think plugins). <a href="https://github.com/larose/utt/blob/master/utt/api/_v1/_private.py">utt heavily uses this
+pattern</a> with
+the help of <a href="https://github.com/larose/cargo">cargo</a>, a dependency injection
+library in Python.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://packaging.python.org/guides/creating-and-discovering-plugins/">https://packaging.python.org/guides/creating-and-discovering-plugins/</a></li>
+<li><a href="https://github.com/larose/utt">https://github.com/larose/utt</a></li>
+<li><a href="https://github.com/larose/cargo">https://github.com/larose/cargo</a></li>
+</ul>
+
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M32 19c0 1-1 2-1 2L21 31s-1 1-2 1-2-1-2-1L2 16c-1-1-1.4-2-1.4-2S0 12.5 0 11V3C0 1.5.8.8.8.8S1.5 0 3 0h8c1.5 0 3 .6 3 .6S15 1 16 2l15 15s1 1 1 2zM7 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/python/" rel="tag">python</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div class="authorbox clearfix">
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Me</span>
+	</div>
+	<div class="authorbox__description">
+		Hi, I&rsquo;m Mathieu Larose - an experienced and enthusiastic tech lead based in Montreal. I tend to work on backend systems and devops, but I enjoy all kinds of software development. I have a B.Sc. and M.Sc. in Computer Science.
+	</div>
+</div>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/main-function-in-node-js/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">Main function in Node.js</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/github-commit-injection/" rel="next">
+			<span class="pager__subtitle">Next&thinsp;»</span>
+			<p class="pager__title">GitHub Commit Injection</p>
+		</a>
+	</div>
+</nav>
+
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+<div class="footer__links">
+	<a class="footer__link" href="/index.xml">RSS</a>
+</div>
+		<div class="footer__copyright">
+			&copy; 2021 Mathieu Larose.
+			<span class="footer__copyright-credits"> </span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

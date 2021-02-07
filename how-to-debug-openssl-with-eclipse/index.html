@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>How to Debug OpenSSL with Eclipse - Mathieu Larose</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+		<meta property="og:title" content="How to Debug OpenSSL with Eclipse" />
+<meta property="og:description" content="Step-by-step instructions on how to debug OpenSSL with Eclipse." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mathieularose.com/how-to-debug-openssl-with-eclipse/" />
+<meta property="article:published_time" content="2017-12-17T00:00:00+00:00" />
+<meta property="article:modified_time" content="2017-12-17T00:00:00+00:00" />
+
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+	<link rel="stylesheet" href="/css/style.css">
+	<link rel="stylesheet" href="/css/main.css">
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-37461978-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="Mathieu Larose" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">Mathieu Larose</div>
+					
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">Menu</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/posts/">
+				
+				<span class="menu__text">Posts</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/projects/">
+				
+				<span class="menu__text">Projects</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/about/">
+				
+				<span class="menu__text">About</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">How to Debug OpenSSL with Eclipse</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0C7 0 1 6 1 14s6 14 14 14 14-6 14-14S23 0 15 0zm0 25C9 25 4 20 4 14S9 3 15 3s11 5 11 11-5 11-11 11zm1-18h-2v8.4l6.8 4.4L22 18l-6-3.8V7z"/></svg><time class="meta__text" datetime="2017-12-17T00:00:00Z">December 2017</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2l1 2h8v11h-16v-13z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/notes/" rel="category">notes</a>
+	</span>
+</div></div>
+		</header><div class="content post__content clearfix">
+			<h2 id="openssl">OpenSSL</h2>
+<p>In the OpenSSL source directory, execute the following command:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ./config --debug --prefix<span style="color:#666">=</span>/tmp/openssl -Wl,--enable-new-dtags,-rpath,<span style="color:#4070a0">&#39;$(LIBRPATH)&#39;</span></code></pre></div>
+<p><code>--debug</code>: compiles in debug mode</p>
+<p><code>--prefix=/tmp/openssl</code>: sets the install directory. You need to set
+this flag in order for the compiled <code>openssl</code> to link with the
+compiled libraries libcrypto and libssl (which are part of openssl)</p>
+<p><code>-Wl,--enable-new-dtags,-rpath,'$(LIBRPATH)'</code>: same reason as
+<code>--prefix</code>, this is to make sure that the compiled <code>openssl</code> links
+with the compiled libraries libcrypto and libssl.</p>
+<p>Then, compile OpenSSL:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ make</code></pre></div>
+<p>Finally, install OpenSSL:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ make install</code></pre></div>
+<p>Make sure that <code>openssl</code> loads <code>libssl.so.1.1</code> and <code>libcrypto.so.1.1</code> that you just compiled:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ldd /tmp/openssl/bin/openssl
+	linux-vdso.so.1 <span style="color:#666">(</span>0x00007ffc32241000<span style="color:#666">)</span>
+	libssl.so.1.1 <span style="color:#666">=</span>&gt; /tmp/openssl/lib/libssl.so.1.1 <span style="color:#666">(</span>0x00007f7acf5ac000<span style="color:#666">)</span>
+	libcrypto.so.1.1 <span style="color:#666">=</span>&gt; /tmp/openssl/lib/libcrypto.so.1.1 <span style="color:#666">(</span>0x00007f7acf0ad000<span style="color:#666">)</span>
+	libdl.so.2 <span style="color:#666">=</span>&gt; /lib64/libdl.so.2 <span style="color:#666">(</span>0x00007f7aceea9000<span style="color:#666">)</span>
+	libpthread.so.0 <span style="color:#666">=</span>&gt; /lib64/libpthread.so.0 <span style="color:#666">(</span>0x00007f7acec8a000<span style="color:#666">)</span>
+	libc.so.6 <span style="color:#666">=</span>&gt; /lib64/libc.so.6 <span style="color:#666">(</span>0x00007f7ace8a5000<span style="color:#666">)</span>
+	/lib64/ld-linux-x86-64.so.2 <span style="color:#666">(</span>0x00007f7acf851000<span style="color:#666">)</span></code></pre></div>
+<p><code>libssl.so.1.1</code> binds to <code>/tmp/openssl/lib/libssl.so.1.1</code> (not the
+system library <code>/lib64/libssl.so.1.1</code>) and <code>libcrypto.so.1.1</code> binds to
+<code>/tmp/openssl/lib/libcrypto.so.1.1</code> (not the system library
+<code>/lib64/libcrypto.so.1.1</code>).</p>
+<h2 id="eclipse">Eclipse</h2>
+<h3 id="cdt">CDT</h3>
+<p>Make sure that you have <a href="https://www.eclipse.org/cdt/">Eclipse CDT</a>.</p>
+<h3 id="import">Import</h3>
+<p>In the main menu, select <em>File | New | Project</em>:</p>
+<p><img src="file-new-project.png" alt=""></p>
+<p>Choose <em>Makefile Project with Existing Code</em>:</p>
+<p><img src="makefile-from-project-with-existing-code.png" alt=""></p>
+<p>Click on <em>Browse&hellip;</em> and go to your OpenSSL source directory. Then,
+choose your toolchain for the indexer. Finally, click <em>Finish</em>.</p>
+<p><img src="import-existing-code.png" alt=""></p>
+<h3 id="debugging">Debugging</h3>
+<p>Go to <em>Run | Debug Configurations</em>:</p>
+<p><img src="debug-configurations-menu.png" alt=""></p>
+<p>Create a new &ldquo;C/C++ Application&rdquo; configuration. Choose your OpenSSL
+project (openssl) and C/C++ Application (<code>apps/openssl</code>):</p>
+<p><img src="debug-configurations-main.png" alt=""></p>
+<p>Set the arguments in the arguments tab (genrsa) and click on <em>Debug</em>:</p>
+<p><img src="debug-configurations-arguments.png" alt=""></p>
+<p>Eclipse should now have started <code>openssl</code> and paused at the first line
+of the main:</p>
+<p><img src="debugging.png" alt=""></p>
+<p>You can now debug OpenSSL with Eclipse!</p>
+
+		</div>
+	</article>
+</main>
+
+<div class="authorbox clearfix">
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Me</span>
+	</div>
+	<div class="authorbox__description">
+		Hi, I&rsquo;m Mathieu Larose - an experienced and enthusiastic tech lead based in Montreal. I tend to work on backend systems and devops, but I enjoy all kinds of software development. I have a B.Sc. and M.Sc. in Computer Science.
+	</div>
+</div>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/decoding-captchas/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">Decoding CAPTCHAs</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/logback-json/" rel="next">
+			<span class="pager__subtitle">Next&thinsp;»</span>
+			<p class="pager__title">How to Log in JSON with Logback</p>
+		</a>
+	</div>
+</nav>
+
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+<div class="footer__links">
+	<a class="footer__link" href="/index.xml">RSS</a>
+</div>
+		<div class="footer__copyright">
+			&copy; 2021 Mathieu Larose.
+			<span class="footer__copyright-credits"> </span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Function Composition in Python - Mathieu Larose</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+		<meta property="og:title" content="Function Composition in Python" />
+<meta property="og:description" content="While I don&rsquo;t consider myself a functional programming expert, all those hours spent in Haskell, Lisp and Scheme definitively changed my way of programming. So, after seeing a lot of unnecessarily complex implementations of function composition in Python on the Web, I decided to write this article to present a simple yet powerful solution that covers all use cases. If you are familiar with function composition, you may want to go to the solution." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mathieularose.com/function-composition-in-python/" />
+<meta property="article:published_time" content="2013-01-01T00:00:00+00:00" />
+<meta property="article:modified_time" content="2013-01-01T00:00:00+00:00" />
+
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+	<link rel="stylesheet" href="/css/style.css">
+	<link rel="stylesheet" href="/css/main.css">
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-37461978-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="Mathieu Larose" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">Mathieu Larose</div>
+					
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">Menu</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/posts/">
+				
+				<span class="menu__text">Posts</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/projects/">
+				
+				<span class="menu__text">Projects</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/about/">
+				
+				<span class="menu__text">About</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">Function Composition in Python</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0C7 0 1 6 1 14s6 14 14 14 14-6 14-14S23 0 15 0zm0 25C9 25 4 20 4 14S9 3 15 3s11 5 11 11-5 11-11 11zm1-18h-2v8.4l6.8 4.4L22 18l-6-3.8V7z"/></svg><time class="meta__text" datetime="2013-01-01T00:00:00Z">January 2013</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2l1 2h8v11h-16v-13z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/articles/" rel="category">articles</a>
+	</span>
+</div></div>
+		</header><div class="content post__content clearfix">
+			<p>While I don&rsquo;t consider myself a functional programming expert, all those hours
+spent in Haskell, Lisp and Scheme definitively changed my way of programming.
+So, after seeing a lot of unnecessarily complex implementations of <a
+href="http://en.wikipedia.org/wiki/Function_composition_(computer_science)">function
+composition</a> in Python on the Web, I decided to write this article to present
+a simple yet powerful solution that covers all use cases. <!-- more --> If you
+are familiar with function composition, you may want to go to the
+<a href="#solution">solution</a>.</p>
+<h3 id="composing-two-functions">Composing two functions</h3>
+<p>Function composition is a way of combining functions such that the
+result of each function is passed as the argument of the next
+function. For example, the composition of two functions <code>f</code> and <code>g</code> is
+denoted <code>f(g(x))</code>. <code>x</code> is the argument of <code>g</code>, the result of <code>g</code> is
+passed as the argument of <code>f</code> and the result of the composition is the
+result of <code>f</code>.</p>
+<p>Let&rsquo;s define <code>compose2</code>, a function that takes two functions as
+arguments (<code>f</code> and <code>g</code>) and returns a function representing their
+composition:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">compose2</span>(f, g):
+    <span style="color:#007020;font-weight:bold">return</span> <span style="color:#007020;font-weight:bold">lambda</span> x: f(g(x))</code></pre></div>
+<p>Example:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;&gt;&gt;</span> <span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">double</span>(x):
+<span style="color:#666">...</span>     <span style="color:#007020;font-weight:bold">return</span> x <span style="color:#666">*</span> <span style="color:#40a070">2</span>
+<span style="color:#666">...</span>
+<span style="color:#666">&gt;&gt;&gt;</span> <span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">inc</span>(x):
+<span style="color:#666">...</span>     <span style="color:#007020;font-weight:bold">return</span> x <span style="color:#666">+</span> <span style="color:#40a070">1</span>
+<span style="color:#666">...</span>
+<span style="color:#666">&gt;&gt;&gt;</span> inc_and_double <span style="color:#666">=</span> compose2(double, inc)
+<span style="color:#666">&gt;&gt;&gt;</span> inc_and_double(<span style="color:#40a070">10</span>)
+<span style="color:#40a070">22</span></code></pre></div>
+<h3 id="composing-_n_-functions">Composing <em>n</em> functions</h3>
+<p>Now that we know how to compose two functions, it would be interesting
+to generalize it to accept <em>n</em> functions. Since the solution is based
+on <code>compose2</code>, let&rsquo;s first look at the composition of three functions
+using <code>compose2</code>.</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;&gt;&gt;</span> <span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">dec</span>(x):
+<span style="color:#666">...</span>     <span style="color:#007020;font-weight:bold">return</span> x <span style="color:#666">-</span> <span style="color:#40a070">1</span>
+<span style="color:#666">...</span>
+<span style="color:#666">&gt;&gt;&gt;</span> inc_double_and_dec <span style="color:#666">=</span> compose2(compose2(dec, double), inc)
+<span style="color:#666">&gt;&gt;&gt;</span> inc_double_and_dec(<span style="color:#40a070">10</span>)
+<span style="color:#40a070">21</span></code></pre></div>
+<p>Do you see the pattern? First, we compose the first two functions,
+then we compose the newly created function with the next one and so
+on.</p>
+<p>Let&rsquo;s write this in Python.</p>
+<p><a id="solution"></a></p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#007020;font-weight:bold">import</span> <span style="color:#0e84b5;font-weight:bold">functools</span>
+
+<span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">compose</span>(<span style="color:#666">*</span>functions):
+    <span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">compose2</span>(f, g):
+        <span style="color:#007020;font-weight:bold">return</span> <span style="color:#007020;font-weight:bold">lambda</span> x: f(g(x))
+    <span style="color:#007020;font-weight:bold">return</span> functools<span style="color:#666">.</span>reduce(compose2, functions, <span style="color:#007020;font-weight:bold">lambda</span> x: x)</code></pre></div>
+<p>Or in a more compact way:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">compose</span>(<span style="color:#666">*</span>functions):
+    <span style="color:#007020;font-weight:bold">return</span> functools<span style="color:#666">.</span>reduce(<span style="color:#007020;font-weight:bold">lambda</span> f, g: <span style="color:#007020;font-weight:bold">lambda</span> x: f(g(x)), functions, <span style="color:#007020;font-weight:bold">lambda</span> x: x)</code></pre></div>
+<p>Example:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;&gt;&gt;</span> inc_double_and_dec <span style="color:#666">=</span> compose(dec, double, inc)
+<span style="color:#666">&gt;&gt;&gt;</span> inc_double_and_dec(<span style="color:#40a070">10</span>)
+<span style="color:#40a070">21</span></code></pre></div>
+<p>Note that <a
+href="http://docs.python.org/3/library/functools.html#functools.reduce">functools.reduce</a>
+is also called <a
+href="http://en.wikipedia.org/wiki/Fold_(higher-order_function)">fold</a>.</p>
+<p>Edit: Handle the case when the list of functions is empty. Thanks to
+Matthew Singer for catching this!</p>
+<h3 id="multiple-argument-functions">Multiple-argument functions</h3>
+<p>The reason why implementations get complex is because they support
+multiple-argument functions. But there is no need to do so, because
+any function can be transformed to a one-argument function using
+higher-order functions such as <a
+href="http://docs.python.org/3/library/functools.html#functools.partial">functools.partial</a>,
+decorators or our own functions.</p>
+<p>Examples:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;&gt;&gt;</span> <span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">second</span>(<span style="color:#666">*</span>args):
+<span style="color:#666">...</span>     <span style="color:#007020;font-weight:bold">return</span> args[<span style="color:#40a070">1</span>]
+<span style="color:#666">...</span>
+<span style="color:#666">&gt;&gt;&gt;</span> <span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">second_wrapper</span>(lst):
+<span style="color:#666">...</span>     <span style="color:#007020;font-weight:bold">return</span> second(<span style="color:#666">*</span>lst)
+<span style="color:#666">...</span>
+<span style="color:#666">&gt;&gt;&gt;</span> pipeline <span style="color:#666">=</span> compose(second_wrapper, <span style="color:#007020">list</span>, <span style="color:#007020">range</span>)
+<span style="color:#666">&gt;&gt;&gt;</span> pipeline(<span style="color:#40a070">5</span>)
+<span style="color:#40a070">1</span></code></pre></div>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#666">&gt;&gt;&gt;</span> <span style="color:#007020;font-weight:bold">def</span> <span style="color:#06287e">sub</span>(a, b):
+<span style="color:#666">...</span>     <span style="color:#007020;font-weight:bold">return</span> a <span style="color:#666">-</span> b
+<span style="color:#666">...</span>
+<span style="color:#666">&gt;&gt;&gt;</span> pipeline <span style="color:#666">=</span> compose(functools<span style="color:#666">.</span>partial(sub, b<span style="color:#666">=</span><span style="color:#40a070">4</span>), operator<span style="color:#666">.</span>neg)
+<span style="color:#666">&gt;&gt;&gt;</span> pipeline(<span style="color:#666">-</span><span style="color:#40a070">6</span>)
+<span style="color:#40a070">2</span></code></pre></div>
+<p>If you want to learn about functional programming in Python, I
+recommend reading
+<a href="https://docs.python.org/3/howto/functional.html">https://docs.python.org/3/howto/functional.html</a>.</p>
+
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M32 19c0 1-1 2-1 2L21 31s-1 1-2 1-2-1-2-1L2 16c-1-1-1.4-2-1.4-2S0 12.5 0 11V3C0 1.5.8.8.8.8S1.5 0 3 0h8c1.5 0 3 .6 3 .6S15 1 16 2l15 15s1 1 1 2zM7 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/python/" rel="tag">python</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div class="authorbox clearfix">
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Me</span>
+	</div>
+	<div class="authorbox__description">
+		Hi, I&rsquo;m Mathieu Larose - an experienced and enthusiastic tech lead based in Montreal. I tend to work on backend systems and devops, but I enjoy all kinds of software development. I have a B.Sc. and M.Sc. in Computer Science.
+	</div>
+</div>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/how-not-to-flatten-a-list-of-lists-in-python/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">How Not to Flatten a List of Lists in Python</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/choosing-the-right-data-structures/" rel="next">
+			<span class="pager__subtitle">Next&thinsp;»</span>
+			<p class="pager__title">Choosing the Right Data Structures</p>
+		</a>
+	</div>
+</nav>
+
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+<div class="footer__links">
+	<a class="footer__link" href="/index.xml">RSS</a>
+</div>
+		<div class="footer__copyright">
+			&copy; 2021 Mathieu Larose.
+			<span class="footer__copyright-credits"> </span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen - Mathieu Larose</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+		<meta property="og:title" content="Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen" />
+<meta property="og:description" content="The audio, microphone and wifi don&rsquo;t work out of the box with Ubuntu 19.10 on a Lenovo ThinkPad X1 Carbon 7th Gen laptop. Here are the steps I made to fix them.
+ Update: I upgraded to Ubuntu 20.04 and now everything works with the default settings. I&rsquo;m on kernel 5.4.0-26-generic and reverted my changes to /etc/modprobe.d/blacklist.conf and /etc/pulse/default.pa (steps 3 and 4 below).
+ Note 1: Even if I tried to make as little customization as possible to make the upgrade easy to Ubuntu 20." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mathieularose.com/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen/" />
+<meta property="article:published_time" content="2020-04-05T00:00:00+00:00" />
+<meta property="article:modified_time" content="2020-04-05T00:00:00+00:00" />
+
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+	<link rel="stylesheet" href="/css/style.css">
+	<link rel="stylesheet" href="/css/main.css">
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-37461978-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="Mathieu Larose" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">Mathieu Larose</div>
+					
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">Menu</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/posts/">
+				
+				<span class="menu__text">Posts</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/projects/">
+				
+				<span class="menu__text">Projects</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/about/">
+				
+				<span class="menu__text">About</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0C7 0 1 6 1 14s6 14 14 14 14-6 14-14S23 0 15 0zm0 25C9 25 4 20 4 14S9 3 15 3s11 5 11 11-5 11-11 11zm1-18h-2v8.4l6.8 4.4L22 18l-6-3.8V7z"/></svg><time class="meta__text" datetime="2020-04-05T00:00:00Z">April 2020</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2l1 2h8v11h-16v-13z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/notes/" rel="category">notes</a>
+	</span>
+</div></div>
+		</header><div class="content post__content clearfix">
+			<p>The audio, microphone and wifi don&rsquo;t work out of the box with Ubuntu 19.10 on a
+Lenovo ThinkPad X1 Carbon 7th Gen laptop. Here are the steps I made to fix them.</p>
+<hr>
+<p><em>Update: I upgraded to Ubuntu 20.04 and now everything works with the
+default settings. I&rsquo;m on kernel 5.4.0-26-generic and reverted my
+changes to <code>/etc/modprobe.d/blacklist.conf</code> and
+<code>/etc/pulse/default.pa</code> (steps 3 and 4 below).</em></p>
+<hr>
+<p>Note 1: Even if I tried to make as little customization as possible to make the
+upgrade easy to Ubuntu 20.04 when it&rsquo;s available, there may be other more
+elegant ways to fix the issues.</p>
+<p>Note 2: The wifi works with kernel 5.3.0-18, which is the kernel that comes by
+default with the Ubuntu installer. However, the wifi doesn&rsquo;t work with the more
+recent kernels installed by Ubuntu 19.10. So if you lose wifi while doing these
+steps, make sure you boot with kernel 5.3.0-18.</p>
+<h2 id="step-1-install-the-latest-kernel-available-from-kernelubuntucom">Step 1: Install the latest kernel available from kernel.ubuntu.com</h2>
+<p>Use
+<a href="https://github.com/pimlie/ubuntu-mainline-kernel.sh">ubuntu-mainline-kernel.sh</a>
+to install the latest kernel available from
+<a href="https://kernel.ubuntu.com">kernel.ubuntu.com</a>.</p>
+<p><del>Note that Ubuntu 20.04&rsquo;s kernel (kernel 5.4) doesn&rsquo;t solve the
+issues. So we are forced to install a mainline kernel.</del> Not true. I
+upgraded to Ubuntu 20.04 and it works with kernel 5.4.0-26-generic.</p>
+<h2 id="step-2-upgrade-linux-firmware-package-to-ubuntu-2004">Step 2: Upgrade linux-firmware package to Ubuntu 20.04</h2>
+<p>Download and install <a href="https://packages.ubuntu.com/focal/linux-firmware">Ubuntu 20.04&rsquo;s linux-firmware
+package</a>, which is currently
+at version 1.187.</p>
+<h2 id="step-3-blacklist-snd_hda_intel-and-snd_soc_skl">Step 3: Blacklist <code>snd_hda_intel</code> and <code>snd_soc_skl</code></h2>
+<p>Add the following lines to <code>/etc/modprobe.d/blacklist.conf</code>:</p>
+<pre><code>blacklist snd_hda_intel
+blacklist snd_soc_skl
+</code></pre><h2 id="step-4-update-pulseaudio-config">Step 4: Update PulseAudio config</h2>
+<p>Add the following lines to <code>/etc/pulse/default.pa</code>:</p>
+<pre><code>load-module module-alsa-sink device=hw:0,0 channels=4
+load-module module-alsa-source device=hw:0,7 channels=4
+</code></pre><h2 id="step-5-reboot">Step 5: Reboot</h2>
+<p>Reboot and make sure you boot with the kernel installed in step 1.</p>
+
+		</div>
+	</article>
+</main>
+
+<div class="authorbox clearfix">
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Me</span>
+	</div>
+	<div class="authorbox__description">
+		Hi, I&rsquo;m Mathieu Larose - an experienced and enthusiastic tech lead based in Montreal. I tend to work on backend systems and devops, but I enjoy all kinds of software development. I have a B.Sc. and M.Sc. in Computer Science.
+	</div>
+</div>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/logback-json/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">How to Log in JSON with Logback</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/main-function-in-node-js/" rel="next">
+			<span class="pager__subtitle">Next&thinsp;»</span>
+			<p class="pager__title">Main function in Node.js</p>
+		</a>
+	</div>
+</nav>
+
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+<div class="footer__links">
+	<a class="footer__link" href="/index.xml">RSS</a>
+</div>
+		<div class="footer__copyright">
+			&copy; 2021 Mathieu Larose.
+			<span class="footer__copyright-credits"> </span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

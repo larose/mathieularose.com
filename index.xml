@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mathieu Larose</title>
+    <link>https://mathieularose.com/</link>
+    <description>Recent content on Mathieu Larose</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 13 Dec 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://mathieularose.com/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Projects</title>
+      <link>https://mathieularose.com/projects/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/projects/</guid>
+      <description>Selected open-source projects that I&amp;rsquo;ve created:
+    Ultimate Time Tracker (utt)   A simple command-line time tracking.       Cargo   Dependency injection library for Python.       Maître Investisseur   Why and how to invest using low-cost index funds.       Conjugueur   French verb conjugation.       Pretty Printer   Pretty printer in the browser.</description>
+    </item>
+    
+    <item>
+      <title>About Me</title>
+      <link>https://mathieularose.com/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/about/</guid>
+      <description>Hi, I&amp;rsquo;m Mathieu Larose - an experienced and enthusiastic tech lead based in Montreal. I tend to work on backend systems and devops, but I enjoy all kinds of software development. I&amp;rsquo;ve been a teacher, software developer, software architect and software development manager. I currently work at Toric Labs as the lead backend developer.
+I have a B.Sc. and M.Sc. in Computer Science.
+You can contact me at mathieu@mathieularose.com.
+Online Profiles  GitHub: https://github.</description>
+    </item>
+    
+    <item>
+      <title>Unicode and UTF-8</title>
+      <link>https://mathieularose.com/unicode-and-utf-8/</link>
+      <pubDate>Sun, 13 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/unicode-and-utf-8/</guid>
+      <description>Confused about Unicode and UTF-8? Don&amp;rsquo;t worry, you are not alone. Unicode and UTF-8 are probably one of the most confused pairs of words in software development. Even for some seasoned software developers.
+The objective of this post is to demystify Unicode and UTF-8 so you become comfortable working with them. We will do so by looking at a concise explanation of Unicode and UTF-8, and at a concrete example in Python.</description>
+    </item>
+    
+    <item>
+      <title>GitHub Commit Injection</title>
+      <link>https://mathieularose.com/github-commit-injection/</link>
+      <pubDate>Mon, 12 Oct 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/github-commit-injection/</guid>
+      <description>For those using GitHub Actions, how safe do you think it is to run the step actions/checkout@637523b962b8d2900f19acb38983d7243f64ba5c in your workflow? Example:
+jobs:build:runs-on:ubuntu-lateststeps:- uses:actions/checkout@637523b962b8d2900f19acb38983d7243f64ba5cLet&amp;rsquo;s see:
+  The step uses the official checkout action which has the &amp;ldquo;Verified creator&amp;rdquo; badge.
+  The step specifies the full length commit SHA as recommended by GitHub:
+   Although pinning to a commit SHA is the most secure option, specifying a tag is more convenient and is widely used.</description>
+    </item>
+    
+    <item>
+      <title>How to Design and Implement a Plugin Architecture in Python</title>
+      <link>https://mathieularose.com/plugin-architecture-in-python/</link>
+      <pubDate>Sun, 19 Jul 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/plugin-architecture-in-python/</guid>
+      <description>We tend to think that plugin-based architectures are hard to develop. And that is certainly true for many advanced plugin-based architectures such as those for browsers. But sometimes we may be looking for a simple yet powerful plugin-based architecture. If that&amp;rsquo;s your case, then read on. I&amp;rsquo;ll show you how to design and implement one in Python.
+I&amp;rsquo;ll explain how I designed utt&amp;rsquo;s plugin system and how you can apply the same pattern to your application.</description>
+    </item>
+    
+    <item>
+      <title>Main function in Node.js</title>
+      <link>https://mathieularose.com/main-function-in-node-js/</link>
+      <pubDate>Sun, 21 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/main-function-in-node-js/</guid>
+      <description>Unlike most other programming languages or runtime environments, Node.js doesn&amp;rsquo;t have a built-in special main function to designate the entry point of a program. But there is an easy way to achieve this in Node.js, which we will show in this article.
+The pattern is to check if the current module is the main module: require.main === module. If this is true, the current file has been run directly - as opposed to have been imported by another file - and in this case we can call the main function.</description>
+    </item>
+    
+    <item>
+      <title>Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen</title>
+      <link>https://mathieularose.com/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen/</link>
+      <pubDate>Sun, 05 Apr 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen/</guid>
+      <description>The audio, microphone and wifi don&amp;rsquo;t work out of the box with Ubuntu 19.10 on a Lenovo ThinkPad X1 Carbon 7th Gen laptop. Here are the steps I made to fix them.
+ Update: I upgraded to Ubuntu 20.04 and now everything works with the default settings. I&amp;rsquo;m on kernel 5.4.0-26-generic and reverted my changes to /etc/modprobe.d/blacklist.conf and /etc/pulse/default.pa (steps 3 and 4 below).
+ Note 1: Even if I tried to make as little customization as possible to make the upgrade easy to Ubuntu 20.</description>
+    </item>
+    
+    <item>
+      <title>How to Log in JSON with Logback</title>
+      <link>https://mathieularose.com/logback-json/</link>
+      <pubDate>Sat, 26 May 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/logback-json/</guid>
+      <description>Complete example of how to log in JSON with Logback.</description>
+    </item>
+    
+    <item>
+      <title>How to Debug OpenSSL with Eclipse</title>
+      <link>https://mathieularose.com/how-to-debug-openssl-with-eclipse/</link>
+      <pubDate>Sun, 17 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/how-to-debug-openssl-with-eclipse/</guid>
+      <description>Step-by-step instructions on how to debug OpenSSL with Eclipse.</description>
+    </item>
+    
+    <item>
+      <title>Decoding CAPTCHAs</title>
+      <link>https://mathieularose.com/decoding-captchas/</link>
+      <pubDate>Fri, 25 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/decoding-captchas/</guid>
+      <description>There are two types of CAPTCHAs. Those that are solved by bots and those that will eventually be solved by bots.
+It&amp;rsquo;s hard to tell if a CAPTCHA is secured or not. But, if the text-based CAPTCHA on your website can be decoded with two lines of code (as shown in this article), it&amp;rsquo;s time to upgrade it.
+Approach Two-line approach:
+  Preprocess the image with convert (ImageMagick).
+  Use Tesseract - an OCR engine - to extract the text from the image.</description>
+    </item>
+    
+    <item>
+      <title>Understanding Python Variables</title>
+      <link>https://mathieularose.com/python-variables/</link>
+      <pubDate>Tue, 01 Dec 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/python-variables/</guid>
+      <description>In this article, you will learn the behavior of variables in Python and, in particular, the semantics of the assignment operator (=).
+Variables or names? Just before we start, I would like to tell you that what you call a variable in other programming languages is called a name in Python.
+Of course not everyone agrees with that, as you can see in this thread. But the official documentation and almost all articles written on the execution model of Python use the word name, so I&amp;rsquo;ll use it here as well.</description>
+    </item>
+    
+    <item>
+      <title>How Prototype Works in JavaScript</title>
+      <link>https://mathieularose.com/javascript-prototype/</link>
+      <pubDate>Tue, 01 Jul 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/javascript-prototype/</guid>
+      <description>A prototype in JavaScript is an object with a special role: it&amp;rsquo;s the parent of another object. And the role of a parent is to provide properties to its children.
+Let&amp;rsquo;s see how a prototype is linked to another object.
+Internal Property [[Prototype]] Every object has an internal property named [[Prototype]]. The value of [[Prototype]] is either a reference to another object or null. Example:
+Observations:
+ a has no prototype.</description>
+    </item>
+    
+    <item>
+      <title>Choosing the Right Data Structures</title>
+      <link>https://mathieularose.com/choosing-the-right-data-structures/</link>
+      <pubDate>Thu, 01 Aug 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/choosing-the-right-data-structures/</guid>
+      <description>About a year ago, I was using NetworkX (a Python package for studying graphs) for one of my projects. While I was working on it, I found that the topological sort implementation in NetworkX was very slow on large-scale instances. So I decided to take a look at it, hoping I can figure out what&amp;rsquo;s wrong and fix it. In the end, I sped up considerably the implementation. Here is how I did it.</description>
+    </item>
+    
+    <item>
+      <title>Function Composition in Python</title>
+      <link>https://mathieularose.com/function-composition-in-python/</link>
+      <pubDate>Tue, 01 Jan 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/function-composition-in-python/</guid>
+      <description>While I don&amp;rsquo;t consider myself a functional programming expert, all those hours spent in Haskell, Lisp and Scheme definitively changed my way of programming. So, after seeing a lot of unnecessarily complex implementations of function composition in Python on the Web, I decided to write this article to present a simple yet powerful solution that covers all use cases. If you are familiar with function composition, you may want to go to the solution.</description>
+    </item>
+    
+    <item>
+      <title>How Not to Flatten a List of Lists in Python</title>
+      <link>https://mathieularose.com/how-not-to-flatten-a-list-of-lists-in-python/</link>
+      <pubDate>Tue, 01 Jan 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://mathieularose.com/how-not-to-flatten-a-list-of-lists-in-python/</guid>
+      <description>You will find lots of solutions on the Web to flatten a list of lists in Python. Most of them take linear time, which is efficient because each element is copied once. But some solutions take more than linear time. In this article, I will explain why one of the simplest solution sum(lst, []) is actually one of the worst solution.
+The inefficiency comes from how the + operator (concatenation) is defined on a list: it creates a new list and copies each element into it.</description>
+    </item>
+    
+  </channel>
+</rss>

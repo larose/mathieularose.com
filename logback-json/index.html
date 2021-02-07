@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>How to Log in JSON with Logback - Mathieu Larose</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+		<meta property="og:title" content="How to Log in JSON with Logback" />
+<meta property="og:description" content="Complete example of how to log in JSON with Logback." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mathieularose.com/logback-json/" />
+<meta property="article:published_time" content="2018-05-26T00:00:00+00:00" />
+<meta property="article:modified_time" content="2018-05-26T00:00:00+00:00" />
+
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+	<link rel="stylesheet" href="/css/style.css">
+	<link rel="stylesheet" href="/css/main.css">
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-37461978-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="Mathieu Larose" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">Mathieu Larose</div>
+					
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">Menu</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/posts/">
+				
+				<span class="menu__text">Posts</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/projects/">
+				
+				<span class="menu__text">Projects</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/about/">
+				
+				<span class="menu__text">About</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">How to Log in JSON with Logback</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0C7 0 1 6 1 14s6 14 14 14 14-6 14-14S23 0 15 0zm0 25C9 25 4 20 4 14S9 3 15 3s11 5 11 11-5 11-11 11zm1-18h-2v8.4l6.8 4.4L22 18l-6-3.8V7z"/></svg><time class="meta__text" datetime="2018-05-26T00:00:00Z">May 2018</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2l1 2h8v11h-16v-13z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/notes/" rel="category">notes</a>
+	</span>
+</div></div>
+		</header><div class="content post__content clearfix">
+			<p>The source code is available at
+<a href="https://github.com/larose/logback-json-example">https://github.com/larose/logback-json-example</a>.</p>
+<p>End result:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">logger<span style="color:#666">.</span><span style="color:#4070a0">debug</span><span style="color:#666">(</span><span style="color:#4070a0">&#34;Hello world.&#34;</span><span style="color:#666">);</span></code></pre></div>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#062873;font-weight:bold">&#34;timestamp&#34;</span> : <span style="color:#4070a0">&#34;2018-05-26T14:51:07.505Z&#34;</span>,
+  <span style="color:#062873;font-weight:bold">&#34;level&#34;</span> : <span style="color:#4070a0">&#34;DEBUG&#34;</span>,
+  <span style="color:#062873;font-weight:bold">&#34;thread&#34;</span> : <span style="color:#4070a0">&#34;main&#34;</span>,
+  <span style="color:#062873;font-weight:bold">&#34;logger&#34;</span> : <span style="color:#4070a0">&#34;com.mathieularose.Main&#34;</span>,
+  <span style="color:#062873;font-weight:bold">&#34;message&#34;</span> : <span style="color:#4070a0">&#34;Hello world.&#34;</span>,
+  <span style="color:#062873;font-weight:bold">&#34;context&#34;</span> : <span style="color:#4070a0">&#34;default&#34;</span>
+}</code></pre></div>
+<h2 id="step-1-logbackxml">Step 1: <code>logback.xml</code></h2>
+<p>Define the appender that writes to stdout:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#062873;font-weight:bold">&lt;configuration&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;appender</span> <span style="color:#4070a0">name=</span><span style="color:#4070a0">&#34;stdout&#34;</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.core.ConsoleAppender&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/appender&gt;</span>
+
+    <span style="color:#062873;font-weight:bold">&lt;root</span> <span style="color:#4070a0">level=</span><span style="color:#4070a0">&#34;debug&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;appender-ref</span> <span style="color:#4070a0">ref=</span><span style="color:#4070a0">&#34;stdout&#34;</span><span style="color:#062873;font-weight:bold">/&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/root&gt;</span>
+<span style="color:#062873;font-weight:bold">&lt;/configuration&gt;</span></code></pre></div>
+<p>Define the encoder:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#062873;font-weight:bold">&lt;configuration&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;appender</span> <span style="color:#4070a0">name=</span><span style="color:#4070a0">&#34;stdout&#34;</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.core.ConsoleAppender&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;encoder</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.core.encoder.LayoutWrappingEncoder&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;/encoder&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/appender&gt;</span>
+
+    <span style="color:#062873;font-weight:bold">&lt;root</span> <span style="color:#4070a0">level=</span><span style="color:#4070a0">&#34;debug&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;appender-ref</span> <span style="color:#4070a0">ref=</span><span style="color:#4070a0">&#34;stdout&#34;</span><span style="color:#062873;font-weight:bold">/&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/root&gt;</span>
+<span style="color:#062873;font-weight:bold">&lt;/configuration&gt;</span></code></pre></div>
+<p>Define the JSON layout and customize the timestamp:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#062873;font-weight:bold">&lt;configuration&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;appender</span> <span style="color:#4070a0">name=</span><span style="color:#4070a0">&#34;stdout&#34;</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.core.ConsoleAppender&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;encoder</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.core.encoder.LayoutWrappingEncoder&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;layout</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.contrib.json.classic.JsonLayout&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+                <span style="color:#062873;font-weight:bold">&lt;timestampFormat&gt;</span>yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSX<span style="color:#062873;font-weight:bold">&lt;/timestampFormat&gt;</span>
+                <span style="color:#062873;font-weight:bold">&lt;timestampFormatTimezoneId&gt;</span>Etc/UTC<span style="color:#062873;font-weight:bold">&lt;/timestampFormatTimezoneId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;/layout&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;/encoder&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/appender&gt;</span>
+
+    <span style="color:#062873;font-weight:bold">&lt;root</span> <span style="color:#4070a0">level=</span><span style="color:#4070a0">&#34;debug&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;appender-ref</span> <span style="color:#4070a0">ref=</span><span style="color:#4070a0">&#34;stdout&#34;</span><span style="color:#062873;font-weight:bold">/&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/root&gt;</span>
+<span style="color:#062873;font-weight:bold">&lt;/configuration&gt;</span></code></pre></div>
+<p>Define the JSON formatter:</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#062873;font-weight:bold">&lt;configuration&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;appender</span> <span style="color:#4070a0">name=</span><span style="color:#4070a0">&#34;stdout&#34;</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.core.ConsoleAppender&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;encoder</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.core.encoder.LayoutWrappingEncoder&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;layout</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.contrib.json.classic.JsonLayout&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+                <span style="color:#062873;font-weight:bold">&lt;timestampFormat&gt;</span>yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSX<span style="color:#062873;font-weight:bold">&lt;/timestampFormat&gt;</span>
+                <span style="color:#062873;font-weight:bold">&lt;timestampFormatTimezoneId&gt;</span>Etc/UTC<span style="color:#062873;font-weight:bold">&lt;/timestampFormatTimezoneId&gt;</span>
+
+                <span style="color:#062873;font-weight:bold">&lt;jsonFormatter</span> <span style="color:#4070a0">class=</span><span style="color:#4070a0">&#34;ch.qos.logback.contrib.jackson.JacksonJsonFormatter&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+                    <span style="color:#062873;font-weight:bold">&lt;prettyPrint&gt;</span>true<span style="color:#062873;font-weight:bold">&lt;/prettyPrint&gt;</span>
+                <span style="color:#062873;font-weight:bold">&lt;/jsonFormatter&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;/layout&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;/encoder&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/appender&gt;</span>
+
+    <span style="color:#062873;font-weight:bold">&lt;root</span> <span style="color:#4070a0">level=</span><span style="color:#4070a0">&#34;debug&#34;</span><span style="color:#062873;font-weight:bold">&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;appender-ref</span> <span style="color:#4070a0">ref=</span><span style="color:#4070a0">&#34;stdout&#34;</span><span style="color:#062873;font-weight:bold">/&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/root&gt;</span>
+<span style="color:#062873;font-weight:bold">&lt;/configuration&gt;</span></code></pre></div>
+<h2 id="step-2-pomxml">Step 2: <code>pom.xml</code></h2>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml">...
+    <span style="color:#062873;font-weight:bold">&lt;properties&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;logback.contrib.version&gt;</span>0.1.5<span style="color:#062873;font-weight:bold">&lt;/logback.contrib.version&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/properties&gt;</span>
+
+    <span style="color:#062873;font-weight:bold">&lt;dependencies&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;dependency&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;groupId&gt;</span>ch.qos.logback<span style="color:#062873;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;artifactId&gt;</span>logback-classic<span style="color:#062873;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;version&gt;</span>1.2.3<span style="color:#062873;font-weight:bold">&lt;/version&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;/dependency&gt;</span>
+
+        <span style="color:#60a0b0;font-style:italic">&lt;!-- ch.qos.logback.contrib.jackson.JacksonJsonFormatter --&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;dependency&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;groupId&gt;</span>ch.qos.logback.contrib<span style="color:#062873;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;artifactId&gt;</span>logback-jackson<span style="color:#062873;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;version&gt;</span>${logback.contrib.version}<span style="color:#062873;font-weight:bold">&lt;/version&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;/dependency&gt;</span>
+
+        <span style="color:#60a0b0;font-style:italic">&lt;!-- ch.qos.logback.contrib.json.classic.JsonLayout --&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;dependency&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;groupId&gt;</span>ch.qos.logback.contrib<span style="color:#062873;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;artifactId&gt;</span>logback-json-classic<span style="color:#062873;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;version&gt;</span>${logback.contrib.version}<span style="color:#062873;font-weight:bold">&lt;/version&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;/dependency&gt;</span>
+
+        <span style="color:#60a0b0;font-style:italic">&lt;!-- com.fasterxml.jackson.databind.ObjectMapper --&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;dependency&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;groupId&gt;</span>com.fasterxml.jackson.core<span style="color:#062873;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;artifactId&gt;</span>jackson-databind<span style="color:#062873;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;version&gt;</span>2.9.5<span style="color:#062873;font-weight:bold">&lt;/version&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;/dependency&gt;</span>
+
+        <span style="color:#062873;font-weight:bold">&lt;dependency&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;groupId&gt;</span>org.slf4j<span style="color:#062873;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;artifactId&gt;</span>slf4j-api<span style="color:#062873;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#062873;font-weight:bold">&lt;version&gt;</span>1.7.25<span style="color:#062873;font-weight:bold">&lt;/version&gt;</span>
+        <span style="color:#062873;font-weight:bold">&lt;/dependency&gt;</span>
+    <span style="color:#062873;font-weight:bold">&lt;/dependencies&gt;</span>
+...</code></pre></div>
+
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M32 19c0 1-1 2-1 2L21 31s-1 1-2 1-2-1-2-1L2 16c-1-1-1.4-2-1.4-2S0 12.5 0 11V3C0 1.5.8.8.8.8S1.5 0 3 0h8c1.5 0 3 .6 3 .6S15 1 16 2l15 15s1 1 1 2zM7 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/java/" rel="tag">java</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div class="authorbox clearfix">
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Me</span>
+	</div>
+	<div class="authorbox__description">
+		Hi, I&rsquo;m Mathieu Larose - an experienced and enthusiastic tech lead based in Montreal. I tend to work on backend systems and devops, but I enjoy all kinds of software development. I have a B.Sc. and M.Sc. in Computer Science.
+	</div>
+</div>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/how-to-debug-openssl-with-eclipse/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">How to Debug OpenSSL with Eclipse</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen/" rel="next">
+			<span class="pager__subtitle">Next&thinsp;»</span>
+			<p class="pager__title">Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen</p>
+		</a>
+	</div>
+</nav>
+
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+<div class="footer__links">
+	<a class="footer__link" href="/index.xml">RSS</a>
+</div>
+		<div class="footer__copyright">
+			&copy; 2021 Mathieu Larose.
+			<span class="footer__copyright-credits"> </span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>
