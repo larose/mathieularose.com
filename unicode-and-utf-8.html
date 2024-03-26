@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unicode and UTF-8</title>
+
+    <meta property="og:title" content="Unicode and UTF-8" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2020-12-01T00:00:00+00:00" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/unicode-and-utf-8" />
+
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1W5GNRP61E"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-1W5GNRP61E');
+    </script>
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./main.css" >
+    <link rel="me" href="https://mastodon.social/@mathieularose">
+  </head>
+
+  <body>
+    <div class="container mx-auto px-3 py-3 max-w-screen-md break-words">
+      <header
+  class="pt-2 pb-1 mb-8 border-gray-300 border-solid border-b-2 flex flex-col gap-y-4 sm:flex-row justify-between items-center"
+>
+  <a class="text-4xl hover:opacity-70" href="/">
+    Mathieu Larose
+  </a>
+
+  <a href="/projects">Projects</a>
+
+  <form action="https://s.lixiasearch.com/c/mathieularose.com">
+    <input
+      type="search"
+      name="q"
+      placeholder="Search"
+      class="border-2 rounded-md py-1 px-1"
+    />
+  </form>
+</header>
+
+      
+
+<h1 class="text-3xl mb-1 font-bold">Unicode and UTF-8</h1>
+<p class="mb-4 text-gray-600">December 2020</p>
+
+<p class="mb-4">Confused about Unicode and UTF-8? Don't worry, you are not alone. Unicode and
+UTF-8 are probably one of the most confused pairs of words in software
+development. Even for some seasoned software developers.</p>
+<p class="mb-4">The objective of this post is to demystify Unicode and UTF-8 so you become
+comfortable working with them. We will do so by looking at a concise explanation
+of Unicode and UTF-8, and at a concrete example in Python.</p>
+<h2 class="text-2xl mt-7 mb-3">Unicode vs UTF-8</h2>
+<p class="mb-4">Unicode assigns numbers to characters. For example, the capital &quot;A&quot; is 65 and
+the lowercase &quot;a&quot; is 97. But Unicode is not limited to English characters only.
+Its goal is to assign a number to every character used by humans. This includes
+letters (from any languages), punctuation marks, symbols, emojis, etc. As of
+March 2020, Unicode has 143,559 characters. So the semicolon &quot;;&quot; is in there,
+just like the lowercase e with acute &quot;é&quot; and the thumbs up emoji &quot;👍&quot;.</p>
+<p class="mb-4">But characters don't live in isolation, they are combined together into
+sequences of characters to create sentences, paragraphs or source code. And, as
+with any data, we need a format to be able to store them in memory or on disk,
+and to read them back. This is what UTF-8 does.</p>
+<p class="mb-4">UTF-8 is a format that specifies how to transform (encode) a sequence of Unicode
+characters into a sequence of bytes, and, vice versa, how to transform (decode)
+a sequence of bytes into a sequence of Unicode characters. Because bytes is the
+only way to store information on a computer.</p>
+<p class="mb-4">UTF-8 is not the only format that allows to encode/decode Unicode characters
+to/from bytes. You may have heard of UTF-16 or UCS-2. But UTF-8 is the most
+popular one.</p>
+<h2 class="text-2xl mt-7 mb-3">The Unicode standard</h2>
+<p class="mb-4">Before I receive a complaint from the Unicode Technical Committee, I'd like to
+clarify something. The definition I gave above for Unicode is its usual
+definition. That is, the definition we use for day-to-day usage. So, when we
+refer to Unicode we usually mean the assignment of numbers to characters, which
+is called the (Unicode) code charts. But that's just one part of the Unicode
+standard.</p>
+<p class="mb-4">In fact, UTF-8, which stands for Unicode Transformation Format 8-bit, is also
+another part of the Unicode standard. It's one of its encoding formats.</p>
+<h2 class="text-2xl mt-7 mb-3">Unicode and UTF-8 in Python</h2>
+<p class="mb-4">In Python, a sequence of Unicode characters is represented as a string:</p>
+<pre class="hljs p-4 mb-4"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">s = <span class="hljs-string">&quot;Hello 👋&quot;</span></span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">s</span>
+&#x27;Hello 👋&#x27;
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-built_in">type</span>(s)</span>
+&lt;class &#x27;str&#x27;&gt;
+</code></pre>
+<p class="mb-4">A string can be encoded to UTF-8 as an array of bytes:</p>
+<pre class="hljs p-4 mb-4"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">b = s.encode(<span class="hljs-string">&quot;utf-8&quot;</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">b</span>
+b&#x27;Hello \xf0\x9f\x91\x8b&#x27;
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-built_in">type</span>(b)</span>
+&lt;class &#x27;bytes&#x27;&gt;
+</code></pre>
+<p class="mb-4">And an array of bytes can be decoded to a string:</p>
+<pre class="hljs p-4 mb-4"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">s2 = b.decode(<span class="hljs-string">&quot;utf-8&quot;</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">s2</span>
+&#x27;Hello 👋&#x27;
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-built_in">type</span>(s2)</span>
+&lt;class &#x27;str&#x27;&gt;
+</code></pre>
+<h3 class="text-xl mb-3">Further readings</h3>
+<p class="mb-4">If you want to know more about Unicode and UTF-8, I recommend the
+<a href="https://en.wikipedia.org/wiki/Unicode" class="underline hover:opacity-70">Unicode</a> and
+<a href="https://en.wikipedia.org/wiki/UTF-8" class="underline hover:opacity-70">UTF-8</a> pages on Wikipedia.</p>
+<p class="mb-4">You can also look up any Unicode characters at <a href="https://unicode-table.com/en/" class="underline hover:opacity-70">https://unicode-table.com/en/</a></p>
+
+
+<div class="border-2 border-indigo-400 bg-indigo-50 rounded my-10">
+  <div class="pl-2 pt-0.5">
+    <p class="text-gray-400 text-xs">Sponsored</p>
+  </div>
+  <div class="px-2 mt-1 pb-2">
+    <p>
+      Need a search bar for your website? Make it easy for visitors to find what
+      they need with
+      <a class="underline hover:opacity-70" href="https://www.lixiasearch.com"
+        >Lixia Search</a
+      >.
+    </p>
+  </div>
+</div>
+
+
+      <footer class="pt-1 pb-2 mt-8 border-gray-300 border-solid border-t-2 text-center">
+  © <a class="hover:opacity-70" href="/">Mathieu Larose</a> |
+    <a class="hover:opacity-70" href="mailto:mathieu@mathieularose.com">Email</a> |
+    <a class="hover:opacity-70" href="https://www.linkedin.com/in/mathieularose/">LinkedIn</a> |
+    <a class="hover:opacity-70" href="https://github.com/larose">GitHub</a>
+</footer>
+
+    </div>
+  </body>
+</html>

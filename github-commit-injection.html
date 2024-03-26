@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Commit Injection</title>
+
+    <meta property="og:title" content="GitHub Commit Injection" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2020-10-01T00:00:00+00:00" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/github-commit-injection" />
+
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1W5GNRP61E"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-1W5GNRP61E');
+    </script>
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./main.css" >
+    <link rel="me" href="https://mastodon.social/@mathieularose">
+  </head>
+
+  <body>
+    <div class="container mx-auto px-3 py-3 max-w-screen-md break-words">
+      <header
+  class="pt-2 pb-1 mb-8 border-gray-300 border-solid border-b-2 flex flex-col gap-y-4 sm:flex-row justify-between items-center"
+>
+  <a class="text-4xl hover:opacity-70" href="/">
+    Mathieu Larose
+  </a>
+
+  <a href="/projects">Projects</a>
+
+  <form action="https://s.lixiasearch.com/c/mathieularose.com">
+    <input
+      type="search"
+      name="q"
+      placeholder="Search"
+      class="border-2 rounded-md py-1 px-1"
+    />
+  </form>
+</header>
+
+      
+
+<h1 class="text-3xl mb-1 font-bold">GitHub Commit Injection</h1>
+<p class="mb-4 text-gray-600">October 2020</p>
+
+<p class="mb-4">For those using <a href="https://github.com/features/actions" class="underline hover:opacity-70">GitHub Actions</a>, how safe
+do you think it is to run the step
+<code>actions/checkout@637523b962b8d2900f19acb38983d7243f64ba5c</code> in your workflow?
+Example:</p>
+<pre class="hljs p-4 mb-4"><code class="hljs"><span class="hljs-attr">jobs:</span>
+  <span class="hljs-attr">build:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-latest</span>
+
+    <span class="hljs-attr">steps:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@637523b962b8d2900f19acb38983d7243f64ba5c</span>
+</code></pre>
+<p class="mb-4">Let's see:</p>
+<ol class="list-decimal pl-6">
+<li>
+<p class="mb-4">The step uses the official <a href="https://github.com/marketplace/actions/checkout" class="underline hover:opacity-70">checkout
+action</a> which has the
+&quot;Verified creator&quot; badge.</p>
+</li>
+<li>
+<p class="mb-4">The step specifies the full length commit SHA as <a href="https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/security-hardening-for-github-actions#using-third-party-actions" class="underline hover:opacity-70">recommended by
+GitHub</a>:</p>
+<blockquote class="border-l-8 ml-4 pl-4">
+<p class="mb-4">Although pinning to a commit SHA is the most secure option, specifying a tag
+is more convenient and is widely used. If you’d like to specify a tag, then be
+sure that you trust the action's creators. The ‘Verified creator’ badge on
+GitHub Marketplace is a useful signal, as it indicates that the action was
+written by a team whose identity has been verified by GitHub.</p>
+</blockquote>
+</li>
+<li>
+<p class="mb-4">You can <a href="https://github.com/actions/checkout/tree/637523b962b8d2900f19acb38983d7243f64ba5c" class="underline hover:opacity-70">browse the version in the official
+repo</a>.</p>
+</li>
+</ol>
+<p class="mb-4">So, is <code>637523b962b8d2900f19acb38983d7243f64ba5c</code> safe to use?</p>
+<p class="mb-4">Well, no. Despite all appearances, that version has not been approved by its
+owners. It's not even in the official git repo. But, I was able to <em>inject</em> it
+to <code>actions/checkout</code> anyway. The code snippet above does work and would execute
+my version of <code>actions/checkout</code> if run.</p>
+<p class="mb-4">If you look closely, I modified the <a href="https://github.com/actions/checkout/commit/e6b043bab47c1f991a2471bdad20bd945a3b7c4d" class="underline hover:opacity-70">second to last
+commit</a>
+so the action displays a message at startup, but it could have been a backdoor
+to steal your source code or secrets.</p>
+<p class="mb-4">How did I injected a version into the official checkout action? Easy:</p>
+<p class="mb-4">Step 1: Fork the <a href="https://github.com/actions/checkout" class="underline hover:opacity-70">official repo</a> to your
+account. Example: <a href="https://github.com/larose/checkout" class="underline hover:opacity-70">larose/checkout</a>.</p>
+<p class="mb-4">Step 2: Push a commit to your forked repo. Example:
+<a href="https://github.com/larose/checkout/tree/commit-injection-demo" class="underline hover:opacity-70">larose/checkout/tree/commit-injection-demo</a>.</p>
+<p class="mb-4">Any commits pushed to your forked repo is now available for use as a version for
+<code>actions/checkout</code> in <em>any</em> GitHub repos. The reason is that commits in the
+parent repo and its forks are stored together in the same commit pool. Contrary
+to branches and tags which are stored separately for each fork.</p>
+<p class="mb-4">I reached out to GitHub about this issue and they replied that:</p>
+<blockquote class="border-l-8 ml-4 pl-4">
+<p class="mb-4">This is an intentional design decision and is working as expected. We may make
+this functionality more strict in the future, but don't have anything to
+announce right now.</p>
+</blockquote>
+<p class="mb-4">So until then, be careful when pinning a third-party action to a full length
+commit SHA. Always check that it belongs to the main branch of the official
+action repo.</p>
+<p class="mb-4">Also, an alternate approach could be to copy (not fork) the repo of a
+third-party action, audit its source code and then pin it to the full length
+commit SHA.</p>
+<p class="mb-4">Happy coding!</p>
+
+
+<div class="border-2 border-indigo-400 bg-indigo-50 rounded my-10">
+  <div class="pl-2 pt-0.5">
+    <p class="text-gray-400 text-xs">Sponsored</p>
+  </div>
+  <div class="px-2 mt-1 pb-2">
+    <p>
+      Need a search bar for your website? Make it easy for visitors to find what
+      they need with
+      <a class="underline hover:opacity-70" href="https://www.lixiasearch.com"
+        >Lixia Search</a
+      >.
+    </p>
+  </div>
+</div>
+
+
+      <footer class="pt-1 pb-2 mt-8 border-gray-300 border-solid border-t-2 text-center">
+  © <a class="hover:opacity-70" href="/">Mathieu Larose</a> |
+    <a class="hover:opacity-70" href="mailto:mathieu@mathieularose.com">Email</a> |
+    <a class="hover:opacity-70" href="https://www.linkedin.com/in/mathieularose/">LinkedIn</a> |
+    <a class="hover:opacity-70" href="https://github.com/larose">GitHub</a>
+</footer>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How to Debug OpenSSL with Eclipse</title>
+
+    <meta property="og:title" content="How to Debug OpenSSL with Eclipse" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2017-12-01T00:00:00+00:00" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/how-to-debug-openssl-with-eclipse" />
+
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1W5GNRP61E"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-1W5GNRP61E');
+    </script>
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./main.css" >
+    <link rel="me" href="https://mastodon.social/@mathieularose">
+  </head>
+
+  <body>
+    <div class="container mx-auto px-3 py-3 max-w-screen-md break-words">
+      <header
+  class="pt-2 pb-1 mb-8 border-gray-300 border-solid border-b-2 flex flex-col gap-y-4 sm:flex-row justify-between items-center"
+>
+  <a class="text-4xl hover:opacity-70" href="/">
+    Mathieu Larose
+  </a>
+
+  <a href="/projects">Projects</a>
+
+  <form action="https://s.lixiasearch.com/c/mathieularose.com">
+    <input
+      type="search"
+      name="q"
+      placeholder="Search"
+      class="border-2 rounded-md py-1 px-1"
+    />
+  </form>
+</header>
+
+      
+
+<h1 class="text-3xl mb-1 font-bold">How to Debug OpenSSL with Eclipse</h1>
+<p class="mb-4 text-gray-600">December 2017</p>
+
+<h2 class="text-2xl mt-7 mb-3">OpenSSL</h2>
+<p class="mb-4">In the OpenSSL source directory, execute the following command:</p>
+<pre class="hljs p-4 mb-4"><code class="hljs">$ ./config --debug --prefix=/tmp/openssl -Wl,--enable-new-dtags,-rpath,<span class="hljs-string">&#x27;$(LIBRPATH)&#x27;</span>
+</code></pre>
+<p class="mb-4"><code>--debug</code>: compiles in debug mode</p>
+<p class="mb-4"><code>--prefix=/tmp/openssl</code>: sets the install directory. You need to set
+this flag in order for the compiled <code>openssl</code> to link with the
+compiled libraries libcrypto and libssl (which are part of openssl)</p>
+<p class="mb-4"><code>-Wl,--enable-new-dtags,-rpath,'$(LIBRPATH)'</code>: same reason as
+<code>--prefix</code>, this is to make sure that the compiled <code>openssl</code> links
+with the compiled libraries libcrypto and libssl.</p>
+<p class="mb-4">Then, compile OpenSSL:</p>
+<pre class="hljs p-4 mb-4"><code class="hljs">$ make
+</code></pre>
+<p class="mb-4">Finally, install OpenSSL:</p>
+<pre class="hljs p-4 mb-4"><code class="hljs">$ make install
+</code></pre>
+<p class="mb-4">Make sure that <code>openssl</code> loads <code>libssl.so.1.1</code> and <code>libcrypto.so.1.1</code> that you just compiled:</p>
+<pre class="hljs p-4 mb-4"><code class="hljs">$ ldd /tmp/openssl/bin/openssl
+	linux-vdso.so.1 (0x00007ffc32241000)
+	libssl.so.1.1 =&gt; /tmp/openssl/lib/libssl.so.1.1 (0x00007f7acf5ac000)
+	libcrypto.so.1.1 =&gt; /tmp/openssl/lib/libcrypto.so.1.1 (0x00007f7acf0ad000)
+	libdl.so.2 =&gt; /lib64/libdl.so.2 (0x00007f7aceea9000)
+	libpthread.so.0 =&gt; /lib64/libpthread.so.0 (0x00007f7acec8a000)
+	libc.so.6 =&gt; /lib64/libc.so.6 (0x00007f7ace8a5000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f7acf851000)
+</code></pre>
+<p class="mb-4"><code>libssl.so.1.1</code> binds to <code>/tmp/openssl/lib/libssl.so.1.1</code> (not the
+system library <code>/lib64/libssl.so.1.1</code>) and <code>libcrypto.so.1.1</code> binds to
+<code>/tmp/openssl/lib/libcrypto.so.1.1</code> (not the system library
+<code>/lib64/libcrypto.so.1.1</code>).</p>
+<h2 class="text-2xl mt-7 mb-3">Eclipse</h2>
+<h3 class="text-xl mb-3">CDT</h3>
+<p class="mb-4">Make sure that you have <a href="https://www.eclipse.org/cdt/" class="underline hover:opacity-70">Eclipse CDT</a>.</p>
+<h3 class="text-xl mb-3">Import</h3>
+<p class="mb-4">In the main menu, select <em>File | New | Project</em>:</p>
+<p class="mb-4"><img src="how-to-debug-openssl-with-eclipse/file-new-project.png" alt="" class="mx-auto"></p>
+<p class="mb-4">Choose <em>Makefile Project with Existing Code</em>:</p>
+<p class="mb-4"><img src="how-to-debug-openssl-with-eclipse/makefile-from-project-with-existing-code.png" alt="" class="mx-auto"></p>
+<p class="mb-4">Click on <em>Browse...</em> and go to your OpenSSL source directory. Then,
+choose your toolchain for the indexer. Finally, click <em>Finish</em>.</p>
+<p class="mb-4"><img src="how-to-debug-openssl-with-eclipse/import-existing-code.png" alt="" class="mx-auto"></p>
+<h3 class="text-xl mb-3">Debugging</h3>
+<p class="mb-4">Go to <em>Run | Debug Configurations</em>:</p>
+<p class="mb-4"><img src="how-to-debug-openssl-with-eclipse/debug-configurations-menu.png" alt="" class="mx-auto"></p>
+<p class="mb-4">Create a new &quot;C/C++ Application&quot; configuration. Choose your OpenSSL
+project (openssl) and C/C++ Application (<code>apps/openssl</code>):</p>
+<p class="mb-4"><img src="how-to-debug-openssl-with-eclipse/debug-configurations-main.png" alt="" class="mx-auto"></p>
+<p class="mb-4">Set the arguments in the arguments tab (genrsa) and click on <em>Debug</em>:</p>
+<p class="mb-4"><img src="how-to-debug-openssl-with-eclipse/debug-configurations-arguments.png" alt="" class="mx-auto"></p>
+<p class="mb-4">Eclipse should now have started <code>openssl</code> and paused at the first line
+of the main:</p>
+<p class="mb-4"><img src="how-to-debug-openssl-with-eclipse/debugging.png" alt="" class="mx-auto"></p>
+<p class="mb-4">You can now debug OpenSSL with Eclipse!</p>
+
+
+<div class="border-2 border-indigo-400 bg-indigo-50 rounded my-10">
+  <div class="pl-2 pt-0.5">
+    <p class="text-gray-400 text-xs">Sponsored</p>
+  </div>
+  <div class="px-2 mt-1 pb-2">
+    <p>
+      Need a search bar for your website? Make it easy for visitors to find what
+      they need with
+      <a class="underline hover:opacity-70" href="https://www.lixiasearch.com"
+        >Lixia Search</a
+      >.
+    </p>
+  </div>
+</div>
+
+
+      <footer class="pt-1 pb-2 mt-8 border-gray-300 border-solid border-t-2 text-center">
+  © <a class="hover:opacity-70" href="/">Mathieu Larose</a> |
+    <a class="hover:opacity-70" href="mailto:mathieu@mathieularose.com">Email</a> |
+    <a class="hover:opacity-70" href="https://www.linkedin.com/in/mathieularose/">LinkedIn</a> |
+    <a class="hover:opacity-70" href="https://github.com/larose">GitHub</a>
+</footer>
+
+    </div>
+  </body>
+</html>
