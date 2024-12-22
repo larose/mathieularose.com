@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Function Composition in Python</title>
+
+    <meta property="og:title" content="Function Composition in Python" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2013-01-01T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/function-composition-in-python" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>Function Composition in Python</h1>
+    <p>January 2013</p>
+  </hgroup>
+
+  <p>While I don't consider myself a functional programming expert, all those hours
+spent in Haskell, Lisp and Scheme definitively changed my way of programming.
+So, after seeing a lot of unnecessarily complex implementations of <a href="http://en.wikipedia.org/wiki/Function_composition_(computer_science)">function
+composition</a>
+in Python online, I decided to write this article to present a simple yet
+powerful solution that covers all use cases. If you are familiar with function
+composition, you may want to go to the <a href="#solution">solution</a>.</p>
+<h3>Composing two functions</h3>
+<p>Function composition is a way of combining functions such that the
+result of each function is passed as the argument of the next
+function. For example, the composition of two functions <code>f</code> and <code>g</code> is
+denoted <code>f(g(x))</code>. <code>x</code> is the argument of <code>g</code>, the result of <code>g</code> is
+passed as the argument of <code>f</code> and the result of the composition is the
+result of <code>f</code>.</p>
+<p>Let's define <code>compose2</code>, a function that takes two functions as
+arguments (<code>f</code> and <code>g</code>) and returns a function representing their
+composition:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">def</span> <span class="hljs-title function_">compose2</span>(<span class="hljs-params">f, g</span>):
+<span class="hljs-keyword">return</span> <span class="hljs-keyword">lambda</span> x: f(g(x))
+</code></pre>
+<p>Example:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">double</span>(<span class="hljs-params">x</span>):</span>
+<span class="hljs-meta prompt_">...</span> <span class="language-python">    <span class="hljs-keyword">return</span> x * <span class="hljs-number">2</span></span>
+<span class="hljs-meta prompt_">...</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">inc</span>(<span class="hljs-params">x</span>):</span>
+<span class="hljs-meta prompt_">...</span> <span class="language-python">    <span class="hljs-keyword">return</span> x + <span class="hljs-number">1</span></span>
+<span class="hljs-meta prompt_">...</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">inc_and_double = compose2(double, inc)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">inc_and_double(<span class="hljs-number">10</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-number">22</span></span>
+</code></pre>
+<h3>Composing <em>n</em> functions</h3>
+<p>Now that we know how to compose two functions, it would be interesting
+to generalize it to accept <em>n</em> functions. Since the solution is based
+on <code>compose2</code>, let's first look at the composition of three functions
+using <code>compose2</code>.</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">dec</span>(<span class="hljs-params">x</span>):</span>
+<span class="hljs-meta prompt_">...</span> <span class="language-python">    <span class="hljs-keyword">return</span> x - <span class="hljs-number">1</span></span>
+<span class="hljs-meta prompt_">...</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">inc_double_and_dec = compose2(compose2(dec, double), inc)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">inc_double_and_dec(<span class="hljs-number">10</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-number">21</span></span>
+</code></pre>
+<p>Do you see the pattern? First, we compose the first two functions,
+then we compose the newly created function with the next one and so
+on.</p>
+<p>Let's write this in Python.</p>
+<p><a id="solution"></a></p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">import</span> functools
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">compose</span>(<span class="hljs-params">*functions</span>):
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">compose2</span>(<span class="hljs-params">f, g</span>):
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">lambda</span> x: f(g(x))
+    <span class="hljs-keyword">return</span> functools.reduce(compose2, functions, <span class="hljs-keyword">lambda</span> x: x)
+</code></pre>
+<p>Or in a more compact way:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">def</span> <span class="hljs-title function_">compose</span>(<span class="hljs-params">*functions</span>):
+    <span class="hljs-keyword">return</span> functools.reduce(<span class="hljs-keyword">lambda</span> f, g: <span class="hljs-keyword">lambda</span> x: f(g(x)), functions, <span class="hljs-keyword">lambda</span> x: x)
+</code></pre>
+<p>Example:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">inc_double_and_dec = compose(dec, double, inc)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">inc_double_and_dec(<span class="hljs-number">10</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-number">21</span></span>
+</code></pre>
+<p>Note that
+<a href="http://docs.python.org/3/library/functools.html#functools.reduce"><code>functools.reduce</code></a>
+is also called
+<a href="http://en.wikipedia.org/wiki/Fold_(higher-order_function)">fold</a>.</p>
+<p>Edit: Handle the case when the list of functions is empty. Thanks to
+Matthew Singer for catching this!</p>
+<h3>Multiple-argument functions</h3>
+<p>The reason why implementations get complex is because they support
+multiple-argument functions. But there is no need to do so, because any function
+can be transformed to a one-argument function using higher-order functions such
+as
+<a href="http://docs.python.org/3/library/functools.html#functools.partial"><code>functools.partial</code></a>,
+decorators or our own functions.</p>
+<p>Examples:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">second</span>(<span class="hljs-params">*args</span>):</span>
+<span class="hljs-meta prompt_">...</span> <span class="language-python">    <span class="hljs-keyword">return</span> args[<span class="hljs-number">1</span>]</span>
+<span class="hljs-meta prompt_">...</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">second_wrapper</span>(<span class="hljs-params">lst</span>):</span>
+<span class="hljs-meta prompt_">...</span> <span class="language-python">    <span class="hljs-keyword">return</span> second(*lst)</span>
+<span class="hljs-meta prompt_">...</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">pipeline = compose(second_wrapper, <span class="hljs-built_in">list</span>, <span class="hljs-built_in">range</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">pipeline(<span class="hljs-number">5</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-number">1</span></span>
+</code></pre>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">sub</span>(<span class="hljs-params">a, b</span>):</span>
+<span class="hljs-meta prompt_">...</span> <span class="language-python">    <span class="hljs-keyword">return</span> a - b</span>
+<span class="hljs-meta prompt_">...</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">pipeline = compose(functools.partial(sub, b=<span class="hljs-number">4</span>), operator.neg)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">pipeline(-<span class="hljs-number">6</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-number">2</span></span>
+</code></pre>
+<p>If you want to learn about functional programming in Python, I recommend reading
+<a href="https://docs.python.org/3/howto/functional.html">https://docs.python.org/3/howto/functional.html</a>.</p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>
