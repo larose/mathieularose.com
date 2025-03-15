@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Choosing the Right Data Structures</title>
+
+    <meta property="og:title" content="Choosing the Right Data Structures" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2013-08-01T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/choosing-the-right-data-structures" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>Choosing the Right Data Structures</h1>
+    <p>August 2013</p>
+  </hgroup>
+
+  <p>About a year ago, I was using <a href="http://networkx.github.io/">NetworkX</a>
+(a Python package for studying graphs) for one of my projects. While I
+was working on it, I found that the <a href="http://networkx.github.io/documentation/latest/reference/generated/networkx.algorithms.dag.topological_sort_recursive.html">topological sort
+implementation</a>
+in NetworkX was very slow on large-scale instances. So I decided to
+take a look at it, hoping I can figure out what's wrong and fix it. In
+the end, I sped up considerably the implementation. Here is how I did
+it.</p>
+<p>Please note that you don't need to understand how <a href="http://en.wikipedia.org/wiki/Topological_sorting">topological
+sort</a> works to
+follow the rest of the article as this is just a pretext to
+realize that it's important to choose the right data structures when
+implementing algorithms.</p>
+<p>Below is the original implementation of <code>topological_sort_recursive</code>
+in NetworkX.</p>
+
+      <table class="hljs">
+        <tbody>
+          <td class="line-numbers"><pre><code>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27</code></pre></td>
+          <td class="code"><pre class="hljs"><code class="hljs"><span class="hljs-keyword">def</span> <span class="hljs-title function_">topological_sort_recursive</span>(<span class="hljs-params">G, nbunch=<span class="hljs-literal">None</span></span>):
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> G.is_directed():
+        <span class="hljs-keyword">raise</span> nx.NetworkXError(<span class="hljs-string">&quot;Topological sort not defined on undirected graphs.&quot;</span>)
+
+    <span class="hljs-comment"># function for recursive dfs</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">_dfs</span>(<span class="hljs-params">G, seen, explored, v</span>):
+        seen.add(v)
+        <span class="hljs-keyword">for</span> w <span class="hljs-keyword">in</span> G[v]:
+            <span class="hljs-keyword">if</span> w <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> seen:
+                <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> _dfs(G, seen, explored, w):
+                    <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+            <span class="hljs-keyword">elif</span> w <span class="hljs-keyword">in</span> seen <span class="hljs-keyword">and</span> w <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> explored:
+                <span class="hljs-comment"># cycle Found--- no topological sort</span>
+                <span class="hljs-keyword">raise</span> nx.NetworkXUnfeasible(<span class="hljs-string">&quot;Graph contains a cycle.&quot;</span>)
+        explored.insert(<span class="hljs-number">0</span>, v) <span class="hljs-comment"># inverse order of when explored</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>
+
+    seen = <span class="hljs-built_in">set</span>()
+    explored = []
+
+    <span class="hljs-keyword">if</span> nbunch <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+        nbunch = G.nodes_iter()
+    <span class="hljs-keyword">for</span> v <span class="hljs-keyword">in</span> nbunch:  <span class="hljs-comment"># process all nodes</span>
+        <span class="hljs-keyword">if</span> v <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> explored:
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> _dfs(G, seen, explored, v):
+                <span class="hljs-keyword">raise</span> nx.NetworkXUnfeasible(<span class="hljs-string">&quot;Graph contains a cycle.&quot;</span>)
+    <span class="hljs-keyword">return</span> explored
+</code></pre></td>
+        </tbody>
+      </table>
+  
+<p>The main issue in this implementation is that two crucial operations
+on the variable <code>explored</code>, which is a list of nodes, take <a href="https://en.wikipedia.org/wiki/Time_complexity">linear
+time</a> instead of taking
+a constant time if proper data structures were chosen.</p>
+<p>The operations <code>w not in explored</code> (lines 12 and 24) and
+<code>explored.insert(0, v)</code> (line 15) are inefficient on a list because a
+list in CPython is implemented as an array. This means that both a
+<a href="http://docs.python.org/reference/datamodel.html#object.__contains__">membership
+test</a>
+(<code>in</code>) and inserting at an arbitrary position (<code>insert</code>) usually take
+linear time. In the first case, one must perform a check on each
+element and in the second case one must shift all elements to the
+right by one position to insert an element at the first position. This
+leads to lots of unnecessary memory copies.</p>
+<p>To prevent such situations, one should keep in mind the run-time of
+the operations on the standard data structures. If this is not
+familiar to you, <a href="http://wiki.python.org/moin/TimeComplexity">this
+page</a> is a good place to
+start.</p>
+<p>Enough said, let's now look at how to speed up the topological sort
+implementation.</p>
+<p>To fix the <code>in</code> operation, we simply need to change the type of
+<code>explored</code> to a set. This way, a membership test now takes a constant
+time because a set is implemented as a <a href="http://en.wikipedia.org/wiki/Hash_table">hash
+table</a> in CPython.</p>
+<p>Since we need to keep track of the order of the visited nodes (this is the
+purpose of the insert call <code>explored.insert(0, v)</code> at line 15) and a set is
+unordered, we must add another variable (<code>order</code>) of type list to which we
+insert the nodes. But instead of inserting a node at the beginning of the list,
+we insert it at the end. Appending to a list usually takes a constant time
+because we only need to insert a new element at the end. Finally, we need to
+reverse the list at the end of the algorithm to get the same order as in the
+original implementation.</p>
+<p>Here is the new implementation:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">def</span> <span class="hljs-title function_">topological_sort_recursive</span>(<span class="hljs-params">G, nbunch=<span class="hljs-literal">None</span></span>):
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> G.is_directed():
+        <span class="hljs-keyword">raise</span> nx.NetworkXError(<span class="hljs-string">&quot;Topological sort not defined on undirected graphs.&quot;</span>)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">_dfs</span>(<span class="hljs-params">v</span>):
+        ancestors.add(v)
+
+        <span class="hljs-keyword">for</span> w <span class="hljs-keyword">in</span> G[v]:
+            <span class="hljs-keyword">if</span> w <span class="hljs-keyword">in</span> ancestors:
+                <span class="hljs-keyword">raise</span> nx.NetworkXUnfeasible(<span class="hljs-string">&quot;Graph contains a cycle.&quot;</span>)
+
+            <span class="hljs-keyword">if</span> w <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> explored:
+                _dfs(w)
+
+        ancestors.remove(v)
+        explored.add(v)
+        order.append(v)
+
+    ancestors = <span class="hljs-built_in">set</span>()
+    explored = <span class="hljs-built_in">set</span>()
+    order = []
+
+    <span class="hljs-keyword">if</span> nbunch <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+        nbunch = G.nodes_iter()
+
+    <span class="hljs-keyword">for</span> v <span class="hljs-keyword">in</span> nbunch:
+        <span class="hljs-keyword">if</span> v <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> explored:
+            _dfs(v)
+
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">list</span>(<span class="hljs-built_in">reversed</span>(order))
+</code></pre>
+<p>I did a similar refactoring for the non recursive implementation and
+<a href="https://github.com/larose/nx-topological-sort-benchmark">benchmarked my new
+implementations</a>
+on a graph with 199,496 nodes and 600,000 arcs. The results are quite
+impressive:</p>
+<table class="post-table mb-4"><thead>
+<tr>
+<th style="text-align:center">Implementation</th>
+<th style="text-align:center">Original time (s)</th>
+<th style="text-align:center">New time (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Recursive</td>
+<td style="text-align:center">4027.5</td>
+<td style="text-align:center">0.5</td>
+</tr>
+<tr>
+<td style="text-align:center">Non-Recursive</td>
+<td style="text-align:center">15.6</td>
+<td style="text-align:center">0.6</td>
+</tr>
+</tbody>
+</table>
+<p>Before, it took more than a hour to apply the recursive topological sort on this
+instance and 15.6 seconds for the non-recursive version. It now takes less than
+a second in both cases.</p>
+<p>My <a href="https://github.com/networkx/networkx/pull/763">changes</a> have been merged
+into the master branch, and have been released in <a href="https://networkx.org/documentation/stable/news.html#networkx-1-8">version
+1.8</a>.</p>
+<hr>
+<p><a href="https://news.ycombinator.com/item?id=6597336">Hacker News Discussion</a></p>
+<p><a href="http://www.reddit.com/r/Python/comments/1jx6tw/choosing_the_right_data_structures/">Reddit Discussion</a></p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>

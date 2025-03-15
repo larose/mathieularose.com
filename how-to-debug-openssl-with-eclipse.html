@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How to Debug OpenSSL with Eclipse</title>
+
+    <meta property="og:title" content="How to Debug OpenSSL with Eclipse" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2017-12-17T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/how-to-debug-openssl-with-eclipse" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>How to Debug OpenSSL with Eclipse</h1>
+    <p>December 2017</p>
+  </hgroup>
+
+  <h2>OpenSSL</h2>
+<p>In the OpenSSL source directory, execute the following command:</p>
+<pre class="hljs"><code class="hljs">$ ./config --debug --prefix=/tmp/openssl -Wl,--enable-new-dtags,-rpath,<span class="hljs-string">&#x27;$(LIBRPATH)&#x27;</span>
+</code></pre>
+<p><code>--debug</code>: compiles in debug mode</p>
+<p><code>--prefix=/tmp/openssl</code>: sets the install directory. You need to set
+this flag in order for the compiled <code>openssl</code> to link with the
+compiled libraries libcrypto and libssl (which are part of openssl)</p>
+<p><code>-Wl,--enable-new-dtags,-rpath,'$(LIBRPATH)'</code>: same reason as
+<code>--prefix</code>, this is to make sure that the compiled <code>openssl</code> links
+with the compiled libraries libcrypto and libssl.</p>
+<p>Then, compile OpenSSL:</p>
+<pre class="hljs"><code class="hljs">$ make
+</code></pre>
+<p>Finally, install OpenSSL:</p>
+<pre class="hljs"><code class="hljs">$ make install
+</code></pre>
+<p>Make sure that <code>openssl</code> loads <code>libssl.so.1.1</code> and <code>libcrypto.so.1.1</code> that you just compiled:</p>
+<pre class="hljs"><code class="hljs">$ ldd /tmp/openssl/bin/openssl
+	linux-vdso.so.1 (0x00007ffc32241000)
+	libssl.so.1.1 =&gt; /tmp/openssl/lib/libssl.so.1.1 (0x00007f7acf5ac000)
+	libcrypto.so.1.1 =&gt; /tmp/openssl/lib/libcrypto.so.1.1 (0x00007f7acf0ad000)
+	libdl.so.2 =&gt; /lib64/libdl.so.2 (0x00007f7aceea9000)
+	libpthread.so.0 =&gt; /lib64/libpthread.so.0 (0x00007f7acec8a000)
+	libc.so.6 =&gt; /lib64/libc.so.6 (0x00007f7ace8a5000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f7acf851000)
+</code></pre>
+<p><code>libssl.so.1.1</code> binds to <code>/tmp/openssl/lib/libssl.so.1.1</code> (not the
+system library <code>/lib64/libssl.so.1.1</code>) and <code>libcrypto.so.1.1</code> binds to
+<code>/tmp/openssl/lib/libcrypto.so.1.1</code> (not the system library
+<code>/lib64/libcrypto.so.1.1</code>).</p>
+<h2>Eclipse</h2>
+<h3>CDT</h3>
+<p>Make sure that you have <a href="https://www.eclipse.org/cdt/">Eclipse CDT</a>.</p>
+<h3>Import</h3>
+<p>In the main menu, select <em>File | New | Project</em>:</p>
+<p><img src="how-to-debug-openssl-with-eclipse/file-new-project.png" alt=""></p>
+<p>Choose <em>Makefile Project with Existing Code</em>:</p>
+<p><img src="how-to-debug-openssl-with-eclipse/makefile-from-project-with-existing-code.png" alt=""></p>
+<p>Click on <em>Browse...</em> and go to your OpenSSL source directory. Then,
+choose your toolchain for the indexer. Finally, click <em>Finish</em>.</p>
+<p><img src="how-to-debug-openssl-with-eclipse/import-existing-code.png" alt=""></p>
+<h3>Debugging</h3>
+<p>Go to <em>Run | Debug Configurations</em>:</p>
+<p><img src="how-to-debug-openssl-with-eclipse/debug-configurations-menu.png" alt=""></p>
+<p>Create a new &quot;C/C++ Application&quot; configuration. Choose your OpenSSL
+project (openssl) and C/C++ Application (<code>apps/openssl</code>):</p>
+<p><img src="how-to-debug-openssl-with-eclipse/debug-configurations-main.png" alt=""></p>
+<p>Set the arguments in the arguments tab (genrsa) and click on <em>Debug</em>:</p>
+<p><img src="how-to-debug-openssl-with-eclipse/debug-configurations-arguments.png" alt=""></p>
+<p>Eclipse should now have started <code>openssl</code> and paused at the first line
+of the main:</p>
+<p><img src="how-to-debug-openssl-with-eclipse/debugging.png" alt=""></p>
+<p>You can now debug OpenSSL with Eclipse!</p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>
