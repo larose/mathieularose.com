@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Building a GitOps CI/CD Pipeline with GitHub Actions (SOC 2)</title>
+
+    <meta property="og:title" content="Building a GitOps CI/CD Pipeline with GitHub Actions (SOC 2)" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2024-04-28T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/gitops-cicd-github-actions" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>Building a GitOps CI/CD Pipeline with GitHub Actions (SOC 2)</h1>
+    <p>April 2024</p>
+  </hgroup>
+
+  <p>This guide presents a simple and developer-friendly GitOps-based CI/CD pipeline built on GitHub Actions, designed for SOC 2 compliance. Having successfully implemented this approach numerous times, I'm sharing an illustrative version for reference. You can explore a working implementation on your own on GitHub (<a href="https://github.com/cicd-excellence">https://github.com/cicd-excellence</a>), or continue reading for a step-by-step breakdown.</p>
+<p>Why I like this architecture:</p>
+<ul>
+<li>It's simple</li>
+<li>It has a great developer experience</li>
+<li>It's SOC 2 compliant</li>
+</ul>
+<h2>Architecture Overview</h2>
+<p>This CI/CD pipeline has two git repositories:</p>
+<ul>
+<li>App repo: Houses the application code and builds artifacts (Docker images, tarballs) for various environments.</li>
+<li>Infra repo: Defines the infrastructure resources and their desired configurations for each environment (dev, staging, prod)</li>
+</ul>
+<p>Both repositories follow trunk-based development with a single long-lived branch, the main branch. Environments are managed through directories within the source code.</p>
+<p>All changes, including rollbacks and hotfixes, go through pull requests, ensuring a controlled and auditable deployment process.</p>
+<h2>Publish Flow (App Repo)</h2>
+<p>Let's break down the steps of the publish flow:</p>
+<ol>
+<li>A developer opens a pull request against the main branch, proposing changes to the app code.</li>
+<li>Automated tests are executed and the results are reported back to the pull request. If these tests fail or are absent, the pull request cannot be merged.</li>
+<li>Another developer reviews and approves the pull request.</li>
+<li>The developer merges the pull request into the main branch.</li>
+<li>Artifacts are built and published, with clear traceability provided through commit ID tagging.</li>
+<li>To maintain continuous delivery to the dev environment, a pull request to the infra repository is automatically opened and merged by a bot, thereby triggering the deploy flow.</li>
+</ol>
+<h3>Trigger</h3>
+<p>The publish workflow (<a href="https://github.com/cicd-excellence/app/blob/main/.github/workflows/publish.yml"><code>.github/workflows/publish.yml</code></a>) in the app repo runs on pull requests and on pushes to the main branch (after a pull request has been merged):</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">name:</span> <span class="hljs-string">Main</span>
+
+<span class="hljs-attr">on:</span>
+  <span class="hljs-attr">pull_request:</span>
+    <span class="hljs-attr">branches:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">main</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">hotfixes/*</span>
+
+  <span class="hljs-attr">push:</span>
+    <span class="hljs-attr">branches:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">main</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">hotfixes/*</span>
+</code></pre>
+<p>For now, let's set aside the hotfix scenario as we'll address it later.</p>
+<h3>Setup Job</h3>
+<p>The first job, the <code>setup</code> job, configures two variables based on the context:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">setup:</span>
+  <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-22.04</span>
+  <span class="hljs-attr">outputs:</span>
+    <span class="hljs-attr">open_infra_pr:</span> <span class="hljs-string">${{</span> <span class="hljs-string">steps.setup.outputs.open_infra_pr</span> <span class="hljs-string">}}</span>
+    <span class="hljs-attr">publish:</span> <span class="hljs-string">${{</span> <span class="hljs-string">steps.setup.outputs.publish</span> <span class="hljs-string">}}</span>
+  <span class="hljs-attr">steps:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Setup</span>
+      <span class="hljs-attr">id:</span> <span class="hljs-string">setup</span>
+      <span class="hljs-attr">run:</span> <span class="hljs-string">|
+        if [[ &quot;${{ github.event_name }}&quot; == &quot;push&quot; ]]; then
+          echo &quot;publish=true&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+</span>
+          <span class="hljs-string">if</span> [[ <span class="hljs-string">$<span class="hljs-template-variable">{{ github.ref }}</span></span> <span class="hljs-string">==</span> <span class="hljs-string">refs/heads/main</span> ]]<span class="hljs-string">;</span> <span class="hljs-string">then</span>
+            <span class="hljs-string">echo</span> <span class="hljs-string">&quot;open_infra_pr=true&quot;</span> <span class="hljs-string">&gt;&gt;</span> <span class="hljs-string">&quot;$GITHUB_OUTPUT&quot;</span>
+          <span class="hljs-string">fi</span>
+        <span class="hljs-string">fi</span>
+</code></pre>
+<p>We only want to publish artifacts when changes are merged into the main branch or a hotfix branch (which we'll address later). So, we refrain from publishing artifacts while a pull request is in progress. Instead, we wait until changes are successfully merged into the main branch (or a hotfix branch).</p>
+<p>To achieve this, we examine the event type. If it's a push event (indicating changes are being pushed to a branch after a pull request has been merged), we set the <code>publish</code> flag to true. Additionally, if the push is to the main branch, we automatically open a pull request in the infra repository to deploy to the dev environment, setting the <code>open_infra_pr</code> flag to true.</p>
+<h3>API Job</h3>
+<p>The subsequent job in the workflow is the api job, responsible for handling all aspects related to the API, including executing automated tests and publishing artifacts if necessary (when <code>publish</code> is true).</p>
+<p>The api job in the publish workflow calls the api workflow.</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">api:</span>
+  <span class="hljs-attr">needs:</span> [<span class="hljs-string">setup</span>]
+  <span class="hljs-attr">uses:</span> <span class="hljs-string">./.github/workflows/api.yml</span>
+  <span class="hljs-attr">with:</span>
+    <span class="hljs-attr">publish:</span> <span class="hljs-string">${{</span> <span class="hljs-string">needs.setup.outputs.publish</span> <span class="hljs-string">}}</span>
+</code></pre>
+<p>Here's the <code>api</code> workflow (<a href="https://github.com/cicd-excellence/app/blob/main/.github/workflows/api.yml"><code>.github/workflows/api.yml</code></a>):</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">name:</span> <span class="hljs-string">API</span>
+
+<span class="hljs-attr">on:</span>
+  <span class="hljs-attr">workflow_call:</span>
+    <span class="hljs-attr">inputs:</span>
+      <span class="hljs-attr">publish:</span>
+        <span class="hljs-attr">required:</span> <span class="hljs-literal">true</span>
+        <span class="hljs-attr">type:</span> <span class="hljs-string">string</span>
+
+<span class="hljs-attr">jobs:</span>
+  <span class="hljs-attr">api:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-22.04</span>
+    <span class="hljs-attr">steps:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Checkout</span>
+        <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v4</span>
+
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Install</span>
+        <span class="hljs-attr">run:</span> <span class="hljs-string">|
+          cd projects/api
+          make install
+</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Run</span> <span class="hljs-string">tests</span>
+        <span class="hljs-attr">run:</span> <span class="hljs-string">|
+          cd projects/api
+          make test
+</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Publish</span>
+        <span class="hljs-attr">if:</span> <span class="hljs-string">inputs.publish</span> <span class="hljs-string">==</span> <span class="hljs-string">&#x27;true&#x27;</span>
+        <span class="hljs-attr">run:</span> <span class="hljs-string">|
+          echo &quot;Pretending publishing the API artifact with SHA $GITHUB_SHA.&quot;
+</span></code></pre>
+<p>The final step of this workflow simulate the publishing process. In reality, this could involve publishing a Docker image to a Docker registry, for instance.</p>
+<p>In scenarios where other apps, such as a web app, are present, a similar workflow called <code>web-app</code> could be created to perform analogous actions for the web app.</p>
+<h3>Infra Job</h3>
+<p>Returning to the publish flow, the next job is <code>infra</code>:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">infra:</span>
+  <span class="hljs-attr">needs:</span> [<span class="hljs-string">api</span>, <span class="hljs-string">setup</span>]
+  <span class="hljs-attr">if:</span> <span class="hljs-string">needs.setup.outputs.open_infra_pr</span> <span class="hljs-string">==</span> <span class="hljs-string">&#x27;true&#x27;</span>
+  <span class="hljs-attr">uses:</span> <span class="hljs-string">./.github/workflows/infra.yml</span>
+  <span class="hljs-attr">secrets:</span>
+    <span class="hljs-attr">GITOPS_DEMO_BOT_GITHUB_TOKEN:</span> <span class="hljs-string">${{</span> <span class="hljs-string">secrets.GITOPS_DEMO_BOT_GITHUB_TOKEN</span> <span class="hljs-string">}}</span>
+</code></pre>
+<p>It calls the infra workflow (<a href="https://github.com/cicd-excellence/app/blob/main/.github/workflows/infra.yml"><code>.github/workflows/infra.yml</code></a>):</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">name:</span> <span class="hljs-string">Infra</span>
+
+<span class="hljs-attr">on:</span>
+  <span class="hljs-attr">workflow_call:</span>
+    <span class="hljs-attr">secrets:</span>
+      <span class="hljs-attr">GITOPS_DEMO_BOT_GITHUB_TOKEN:</span>
+        <span class="hljs-attr">required:</span> <span class="hljs-literal">true</span>
+
+<span class="hljs-attr">jobs:</span>
+  <span class="hljs-attr">infra:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-22.04</span>
+    <span class="hljs-attr">steps:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Checkout</span>
+        <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v4</span>
+
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Open</span> <span class="hljs-string">Infra</span> <span class="hljs-string">PR</span>
+        <span class="hljs-attr">env:</span>
+          <span class="hljs-attr">GH_TOKEN:</span> <span class="hljs-string">${{</span> <span class="hljs-string">secrets.GITOPS_DEMO_BOT_GITHUB_TOKEN</span> <span class="hljs-string">}}</span>
+        <span class="hljs-attr">run:</span> <span class="hljs-string">|
+          echo &quot;Opening PR in infra repo to update dev to $GITHUB_SHA&quot;
+          TAG=$GITHUB_SHA bash scripts/open_infra_pr.sh
+</span></code></pre>
+<p>The <code>open_infra_pr.sh</code> script called at the end of the workflow opens and merges a pull request in the infra repo with the help of a bot:</p>
+<p><img src="gitops-cicd-github-actions/update-dev-pr.png" alt=""></p>
+<p>The bot is just a regular GitHub account, named <a href="https://github.com/gitops-demo-bot">GitOps Demo Bot</a>, with access to both the app and infra repositories. It also has special permissions to bypass certain branch protection rules, but we'll talk more about that later.</p>
+<p>Here's the <a href="https://github.com/cicd-excellence/app/blob/main/scripts/open_infra_pr.sh"><code>open_infra_pr.sh</code></a> script:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta">#!/bin/bash</span>
+
+BRANCH_NAME=gitops-demo-bot/<span class="hljs-variable">$TAG</span>
+
+git <span class="hljs-built_in">clone</span> https://<span class="hljs-variable">$GH_TOKEN</span>@github.com/cicd-excellence/infra.git
+
+<span class="hljs-built_in">cd</span> infra
+
+git config --global user.email <span class="hljs-string">&quot;&quot;</span>
+git config --global user.name <span class="hljs-string">&quot;GitOps Demo Bot&quot;</span>
+
+git checkout -b <span class="hljs-variable">$BRANCH_NAME</span>
+
+TAG=<span class="hljs-variable">$TAG</span> make dev.update
+
+git add .
+git commit -m <span class="hljs-string">&quot;Update dev to <span class="hljs-variable">$TAG</span>&quot;</span>
+git push origin <span class="hljs-variable">$BRANCH_NAME</span>
+
+gh <span class="hljs-built_in">pr</span> create \
+  --body <span class="hljs-string">&quot;&quot;</span> \
+  --title <span class="hljs-string">&quot;Update dev to <span class="hljs-variable">$TAG</span>&quot;</span> \
+  --<span class="hljs-built_in">head</span> <span class="hljs-string">&quot;<span class="hljs-variable">$BRANCH_NAME</span>&quot;</span> \
+  --base <span class="hljs-string">&quot;main&quot;</span>
+
+gh <span class="hljs-built_in">pr</span> merge --admin --rebase
+</code></pre>
+<h2>Deploy Flow (Infra Repo)</h2>
+<p>Let's dive into the deploy process within the infra repo. This flow mirrors the publishing process in the app repo, but instead of publishing artifacts, it deploys them to environments.</p>
+<ol>
+<li>A developer opens a pull request against the main branch.</li>
+<li>Automated tests run and report results back to the pull request. Failure (or absence) of these tests blocks the pull request from merging.</li>
+<li>Another developer reviews and approves the pull request.</li>
+<li>The developer merges the pull request into the main branch.</li>
+<li>Environments are updated accordingly.</li>
+</ol>
+<h2>Trigger</h2>
+<p>The deploy workflow (<a href="https://github.com/cicd-excellence/infra/blob/main/.github/workflows/deploy.yml">.github/workflows/deploy.yml</a>) in the infra repo runs on both pull requests and on pushes to the main branch (once a pull request has been merged):</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">name:</span> <span class="hljs-string">Deploy</span>
+
+<span class="hljs-attr">on:</span>
+  <span class="hljs-attr">pull_request:</span>
+    <span class="hljs-attr">branches:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">main</span>
+
+  <span class="hljs-attr">push:</span>
+    <span class="hljs-attr">branches:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">main</span>
+</code></pre>
+<h3>Setup Job</h3>
+<p>The the first job, the <code>setup</code> job, configures a variable based on the context:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">setup:</span>
+  <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-22.04</span>
+  <span class="hljs-attr">outputs:</span>
+    <span class="hljs-attr">deploy:</span> <span class="hljs-string">${{</span> <span class="hljs-string">steps.setup.outputs.deploy</span> <span class="hljs-string">}}</span>
+  <span class="hljs-attr">steps:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Setup</span>
+      <span class="hljs-attr">id:</span> <span class="hljs-string">setup</span>
+      <span class="hljs-attr">run:</span> <span class="hljs-string">|
+        if [[ &quot;${{ github.event_name }}&quot; == &quot;push&quot; ]] &amp;&amp; [[ ${{ github.ref }} == refs/heads/main ]]; then
+          echo &quot;deploy=true&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+        fi
+</span></code></pre>
+<h2>Test Job</h2>
+<p>The next job, the <code>test</code> job, runs the tests:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-22.04</span>
+<span class="hljs-attr">steps:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Checkout</span>
+    <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v4</span>
+
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Run</span> <span class="hljs-string">tests</span>
+    <span class="hljs-attr">run:</span> <span class="hljs-string">|
+      make test
+</span></code></pre>
+<h3>Deploy Job</h3>
+<p>Finally, the last job in the workflow, the <code>deploy</code> job, updates the various environments based on the configuration. It does only so after a pull request has been merged (push event in the main branch):</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">deploy:</span>
+  <span class="hljs-attr">needs:</span> [<span class="hljs-string">setup</span>, <span class="hljs-string">test</span>]
+  <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-22.04</span>
+  <span class="hljs-attr">if:</span> <span class="hljs-string">needs.setup.outputs.deploy</span> <span class="hljs-string">==</span> <span class="hljs-string">&#x27;true&#x27;</span>
+  <span class="hljs-attr">strategy:</span>
+    <span class="hljs-attr">matrix:</span>
+      <span class="hljs-attr">env:</span> [<span class="hljs-string">dev</span>, <span class="hljs-string">staging</span>, <span class="hljs-string">prod</span>]
+  <span class="hljs-attr">steps:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Checkout</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v4</span>
+
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Deploy</span>
+      <span class="hljs-attr">run:</span> <span class="hljs-string">|
+        VERSION=$(jq -r &#x27;.api.tag&#x27; envs/${{matrix.env}}.json)
+        echo &quot;Pretending to deploy ${{ matrix.env }} at version $VERSION (if it changed)&quot;
+</span></code></pre>
+<h3>Managing Multiple Environments</h3>
+<p>As mentioned, we don't use branches to manage different environments. They are managed through directories in the infra repository:</p>
+<pre class="hljs"><code class="hljs">$ tree envs/
+envs/
+├── dev.json
+├── prod.json
+└── staging.json
+</code></pre>
+<p>For example, to promote dev to staging, we simply copy <code>dev.json</code> to <code>staging.json</code> and open a pull request. In a real-life scenario, you'd likely have multiple config files per environment, with one specifically containing artifact versions. This is the one you copy.</p>
+<h3>Push vs Pull Deployments</h3>
+<p>In this illustrative scenario, we use push-based deployment, where deployment is triggered from GitHub Actions:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Pretending to deploy <span class="hljs-variable">${{ matrix.env }</span>} at version <span class="hljs-variable">$VERSION</span> (if it changed)&quot;</span>
+</code></pre>
+<p>While it does nothing here, in practice, it might execute commands like <code>terraform apply</code>.</p>
+<p>Alternatively, you could opt for pull-based deployment, where an agent within the infra monitors the infra repo for changes and automatically applies them. In this case, the deploy workflow might not exist, except to enforce automated tests or formatting.</p>
+<p>Now that we've covered the successful path from change to deployment, let's explore rollback and hotfix flows.</p>
+<h3>Rollback Flow (Infra Repo)</h3>
+<p>Rolling back is a straightforward process. We simply open a pull request against the main branch in the infra repo and revert the version of the artifacts (e.g. api) to a previous version.</p>
+<h4>HotFix Flow (App Repo)</h4>
+<p>One aspect I really appreciate about this architecture is its consistency between the hotfix flow and the regular publish flow in the app repo. The only extra step needed is to initiate the creation of the hotfix branch.</p>
+<ol>
+<li>Developer triggers the hotfix flow (<a href="https://github.com/cicd-excellence/app/blob/main/.github/workflows/hotfix.yml"><code>.github/workflows/hotfix.yml</code></a>)
+a. This workflow creates a new <code>hotfixes/&lt;branch-name&gt;</code> branch at the appropriate commit, serving as the new base branch.</li>
+<li>Developer opens a pull request against the <code>hotfixes/&lt;branch-name&gt;</code> (not against the main branch)</li>
+</ol>
+<p>The remainder of the process mirrors the publish flow, as <code>.github/workflows/publish.yml</code> also handles branches starting with <code>hotfixes/</code>:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">name:</span> <span class="hljs-string">Publish</span>
+
+<span class="hljs-attr">on:</span>
+  <span class="hljs-attr">pull_request:</span>
+    <span class="hljs-attr">branches:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">main</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">hotfixes/*</span>
+
+  <span class="hljs-attr">push:</span>
+    <span class="hljs-attr">branches:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">main</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">hotfixes/*</span>
+</code></pre>
+<p>Following this, a developer proceeds with the deploy flow in the infra repository, updating the versions with the newly published version.</p>
+<p>Here's the hotfix flow (<a href="https://github.com/cicd-excellence/app/blob/main/.github/workflows/hotfix.yml"><code>.github/workflows/hotfix.yml</code></a>) responsibles for creating the hotfix's base branch:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">name:</span> <span class="hljs-string">Hotfix</span>
+
+<span class="hljs-attr">on:</span>
+  <span class="hljs-attr">workflow_dispatch:</span>
+    <span class="hljs-attr">inputs:</span>
+      <span class="hljs-attr">base_commit_sha:</span>
+        <span class="hljs-attr">required:</span> <span class="hljs-literal">true</span>
+        <span class="hljs-attr">type:</span> <span class="hljs-string">string</span>
+      <span class="hljs-attr">branch_name:</span>
+        <span class="hljs-attr">required:</span> <span class="hljs-literal">true</span>
+        <span class="hljs-attr">type:</span> <span class="hljs-string">string</span>
+
+<span class="hljs-attr">jobs:</span>
+  <span class="hljs-attr">hotfix:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-22.04</span>
+    <span class="hljs-attr">steps:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Checkout</span>
+        <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v4</span>
+
+        <span class="hljs-attr">with:</span>
+          <span class="hljs-attr">ref:</span> <span class="hljs-string">${{</span> <span class="hljs-string">github.event.inputs.base_commit_sha</span> <span class="hljs-string">}}</span>
+          <span class="hljs-attr">token:</span> <span class="hljs-string">${{</span> <span class="hljs-string">secrets.GITOPS_DEMO_BOT_GITHUB_TOKEN</span> <span class="hljs-string">}}</span>
+
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Create</span> <span class="hljs-string">new</span> <span class="hljs-string">branch</span>
+        <span class="hljs-attr">run:</span> <span class="hljs-string">|
+          git switch -c hotfixes/${{ github.event.inputs.branch_name }}
+          git push origin hotfixes/${{ github.event.inputs.branch_name }}
+</span></code></pre>
+<p>Here's an example:</p>
+<p><img src="gitops-cicd-github-actions/run-hotfix-workflow.png" alt=""></p>
+<p>And the resulting branch created by the bot:</p>
+<p><img src="gitops-cicd-github-actions/hotfix-branch.png" alt=""></p>
+<p>As a result, every merged pull request to this branch will build and publish artifacts that can be used in the infra repo.</p>
+<h2>Ruleset for Enforcing Branch Protection</h2>
+<p>Now that we've covered all the workflows, let's explore how we enforce branch protection to ensure that every change must go through a pull request, pass tests, and receive approval.</p>
+<p>For this purpose, we utilize rulesets, the next generation of GitHub's branch protection feature.</p>
+<p>Below is a screenshot of the ruleset applied to the app repo, available at <a href="https://github.com/cicd-excellence/app/rules/702950:">https://github.com/cicd-excellence/app/rules/702950:</a></p>
+<p><img src="gitops-cicd-github-actions/ruleset.png" alt=""></p>
+<p>Here's a JSON export of the ruleset:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">702950</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Default&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;target&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;branch&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;source_type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Repository&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;source&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cicd-excellence/app&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;enforcement&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;active&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;conditions&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;ref_name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;exclude&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;include&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;~DEFAULT_BRANCH&quot;</span><span class="hljs-punctuation">]</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;rules&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;deletion&quot;</span>
+    <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;non_fast_forward&quot;</span>
+    <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;creation&quot;</span>
+    <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;required_linear_history&quot;</span>
+    <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;pull_request&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;parameters&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;required_approving_review_count&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;dismiss_stale_reviews_on_push&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;require_code_owner_review&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;require_last_push_approval&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;required_review_thread_resolution&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span>
+      <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;required_status_checks&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;parameters&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;strict_required_status_checks_policy&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;required_status_checks&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+          <span class="hljs-punctuation">{</span>
+            <span class="hljs-attr">&quot;context&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;api / api&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;integration_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">15368</span>
+          <span class="hljs-punctuation">}</span>
+        <span class="hljs-punctuation">]</span>
+      <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;bypass_actors&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<p>This ruleset ensures that on the main branch:</p>
+<ul>
+<li>Branch deletions, non-fast-forward merges, and direct commits are prohibited.</li>
+<li>Linear history is maintained.</li>
+<li>Pull requests must have at least one approving review.</li>
+<li>Required status checks, such as passing automated tests, are enforced.</li>
+</ul>
+<p>There's a corresponding ruleset for hotfixes, with two important distinctions: the bot is permitted to bypass the ruleset's enforcement to facilitate the creation of hotfix base branches via the hotfix flow, and users are allowed to delete hotfix branches once they're no longer needed.</p>
+<h2>Conclusion</h2>
+<p>That's all for now. I hope you've found this information helpful in understanding how to implement similar deployment workflows in your projects. If you have any further questions or need clarification on any topic discussed, feel free to reach out!</p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>
