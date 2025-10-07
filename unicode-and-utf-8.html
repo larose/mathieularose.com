@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unicode and UTF-8</title>
+
+    <meta property="og:title" content="Unicode and UTF-8" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2020-12-13T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/unicode-and-utf-8" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>Unicode and UTF-8</h1>
+    <p>December 2020</p>
+  </hgroup>
+
+  <p>Confused about Unicode and UTF-8? Don't worry, you are not alone. Unicode and
+UTF-8 are probably one of the most confused pairs of words in software
+development. Even for some seasoned software developers.</p>
+<p>The objective of this post is to demystify Unicode and UTF-8 so you become
+comfortable working with them. We will do so by looking at a concise explanation
+of Unicode and UTF-8, and at a concrete example in Python.</p>
+<h2>Unicode vs UTF-8</h2>
+<p>Unicode assigns numbers to characters. For example, the capital &quot;A&quot; is 65 and
+the lowercase &quot;a&quot; is 97. But Unicode is not limited to English characters only.
+Its goal is to assign a number to every character used by humans. This includes
+letters (from any languages), punctuation marks, symbols, emojis, etc. As of
+March 2020, Unicode has 143,559 characters. So the semicolon &quot;;&quot; is in there,
+just like the lowercase e with acute &quot;é&quot; and the thumbs up emoji &quot;👍&quot;.</p>
+<p>But characters don't live in isolation, they are combined together into
+sequences of characters to create sentences, paragraphs or source code. And, as
+with any data, we need a format to be able to store them in memory or on disk,
+and to read them back. This is what UTF-8 does.</p>
+<p>UTF-8 is a format that specifies how to transform (encode) a sequence of Unicode
+characters into a sequence of bytes, and, vice versa, how to transform (decode)
+a sequence of bytes into a sequence of Unicode characters. Because bytes is the
+only way to store information on a computer.</p>
+<p>UTF-8 is not the only format that allows to encode/decode Unicode characters
+to/from bytes. You may have heard of UTF-16 or UCS-2. But UTF-8 is the most
+popular one.</p>
+<h2>The Unicode standard</h2>
+<p>Before I receive a complaint from the Unicode Technical Committee, I'd like to
+clarify something. The definition I gave above for Unicode is its usual
+definition. That is, the definition we use for day-to-day usage. So, when we
+refer to Unicode we usually mean the assignment of numbers to characters, which
+is called the (Unicode) code charts. But that's just one part of the Unicode
+standard.</p>
+<p>In fact, UTF-8, which stands for Unicode Transformation Format 8-bit, is also
+another part of the Unicode standard. It's one of its encoding formats.</p>
+<h2>Unicode and UTF-8 in Python</h2>
+<p>In Python, a sequence of Unicode characters is represented as a string:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">s = <span class="hljs-string">&quot;Hello 👋&quot;</span></span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">s</span>
+&#x27;Hello 👋&#x27;
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-built_in">type</span>(s)</span>
+&lt;class &#x27;str&#x27;&gt;
+</code></pre>
+<p>A string can be encoded to UTF-8 as an array of bytes:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">b = s.encode(<span class="hljs-string">&quot;utf-8&quot;</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">b</span>
+b&#x27;Hello \xf0\x9f\x91\x8b&#x27;
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-built_in">type</span>(b)</span>
+&lt;class &#x27;bytes&#x27;&gt;
+</code></pre>
+<p>And an array of bytes can be decoded to a string:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">s2 = b.decode(<span class="hljs-string">&quot;utf-8&quot;</span>)</span>
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python">s2</span>
+&#x27;Hello 👋&#x27;
+<span class="hljs-meta prompt_">&gt;&gt;&gt;</span> <span class="language-python"><span class="hljs-built_in">type</span>(s2)</span>
+&lt;class &#x27;str&#x27;&gt;
+</code></pre>
+<h3>Further readings</h3>
+<p>If you want to know more about Unicode and UTF-8, I recommend the
+<a href="https://en.wikipedia.org/wiki/Unicode">Unicode</a> and
+<a href="https://en.wikipedia.org/wiki/UTF-8">UTF-8</a> pages on Wikipedia.</p>
+<p>You can also look up any Unicode characters at <a href="https://unicode-table.com/en/">https://unicode-table.com/en/</a></p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>

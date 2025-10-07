@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Optiverse: Evolving Code with LLMs</title>
+
+    <meta property="og:title" content="Optiverse: Evolving Code with LLMs" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2025-07-10T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/optiverse-evolving-code-with-llms" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>Optiverse: Evolving Code with LLMs</h1>
+    <p>July 2025</p>
+  </hgroup>
+
+  <p>I've released the initial version of <a href="https://github.com/larose/optiverse">Optiverse</a>, a Python library for evolving code and algorithms using Large Language Models (LLMs). Inspired by DeepMind's <a href="https://deepmind.google/discover/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/">AlphaEvolve</a>, Optiverse lets LLMs iteratively refine program solutions to a given problem.</p>
+<p>With Optiverse, you define a problem and provide an evaluation function. The system then generates and evolves candidate solutions over multiple iterations, learning which approaches yield better results.</p>
+<h2>First Experiment: Solving TSP</h2>
+<p>As an initial test, I used Optiverse on the classic <a href="https://en.wikipedia.org/wiki/Travelling_salesman_problem">Traveling Salesman Problem (TSP)</a>.</p>
+<p>TSP can be described as follows: given a list of cities and the distances between them, the goal is to find the shortest route that visits each city exactly once and returns to the starting city.</p>
+<p>It’s a challenging problem due to the rapidly increasing number of possible routes as cities are added. But efficient heuristics for TSP have practical applications in areas like delivery routing.</p>
+<h2>Problem Definition</h2>
+<p>The problem definition provided to Optiverse was as follows:</p>
+<pre class="hljs"><code class="hljs">Write a Python program that implements a heuristic for the Traveling Salesman Problem (TSP).
+
+Your script must define a `solve` function with the following signature:
+
+
+def solve(context: Context) -&gt; None:
+    pass
+
+
+- The `Context` object provides the TSP instance data and methods to report solutions.
+- You may only modify the `solve` function. You are allowed to define and call additional helper functions within your script, but you cannot modify the `Context` class itself.
+
+Your implementation should:
+
+- Access the TSP data through the Context object.
+- Call `context.report_new_best_solution(solution)` only when you have found a better solution than previously reported.
+- The most recently reported solution will be used as the final answer when time runs out.
+
+Important: Any solution reported after time runs out will be ignored. Ensure your implementation checks the remaining time and only reports solutions while time is available.
+</code></pre>
+<p>The initial baseline solution simply generated a random permutation of cities for the tour:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">from</span> abc <span class="hljs-keyword">import</span> ABC, abstractmethod
+<span class="hljs-keyword">from</span> datetime <span class="hljs-keyword">import</span> timedelta
+<span class="hljs-keyword">import</span> random
+<span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> <span class="hljs-type">List</span>, <span class="hljs-type">Tuple</span>
+
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">Context</span>(<span class="hljs-title class_ inherited__">ABC</span>):
+    <span class="hljs-keyword">pass</span> <span class="hljs-comment"># Omitted for brevity</span>
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">solve</span>(<span class="hljs-params">context: Context</span>) -&gt; <span class="hljs-literal">None</span>:
+    num_cities = <span class="hljs-built_in">len</span>(context.instance)
+
+    <span class="hljs-keyword">while</span> context.remaining_time() &gt; timedelta():
+        <span class="hljs-comment"># Generate a random solution (permutation of city indices)</span>
+        solution = random.sample(<span class="hljs-built_in">range</span>(num_cities), num_cities)
+        context.report_new_best_solution(solution)
+        <span class="hljs-keyword">break</span>  <span class="hljs-comment"># since it&#x27;s pointless to continue in this example</span>
+</code></pre>
+<h2>Results</h2>
+<p>I ran Optiverse for 100 iterations using Gemini 2.0 Flash as the LLM. The evaluator executed each solver 3 times with a 30-second time limit on a 280-city instance, using the average tour length as the score.</p>
+<ul>
+<li>Optimal tour length: 2579</li>
+<li>Best program generated by Optiverse: average tour length of 2605</li>
+</ul>
+<p>So the best solution found is within 1% of optimality. While this result isn't surprising since solvers can get within 1% of optimality for much larger instances, the code it generated was nonetheless interesting.</p>
+<p>For example, it precomputed a distance matrix so that checking distances became simple lookups rather than repeated calculations. It also implemented one of the best-known heuristics, <a href="https://en.wikipedia.org/wiki/2-opt">2-opt</a>, and did so efficiently by computing only the delta in tour length rather than recalculating the entire route after each swap. Finally, it periodically perturbed the solution to explore different parts of the solution space and avoid getting stuck in local optima.</p>
+<h3>Solution</h3>
+<p>At each iteration, the LLM provided a description of the solution. For the best iteration, the description was as follows:</p>
+<ul>
+<li>Refactor the centroid-based start city selection to pick multiple start cities (up to a limit). Run Nearest Neighbor and 2-opt on each, and then choose the best resulting tour as the starting point for the main loop.  This should help avoid poor initial tours.</li>
+<li>Tune the number of Nearest Neighbor starting cities.</li>
+<li>Fine-tune the <code>distance_threshold_percentage</code> to improve the effectiveness of the 2-opt heuristic. A smaller value will consider more swaps.</li>
+<li>Adjust <code>initial_iterations</code> to ensure sufficient time is spent generating a good initial tour and estimating the iteration time.</li>
+<li>Very slightly increase the percentage of remaining time used for computation, but be careful not to exceed the time limit when reporting.</li>
+</ul>
+<p>Here's the best solver generated by Optiverse:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">from</span> abc <span class="hljs-keyword">import</span> ABC, abstractmethod
+<span class="hljs-keyword">from</span> datetime <span class="hljs-keyword">import</span> timedelta
+<span class="hljs-keyword">import</span> random
+<span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> <span class="hljs-type">List</span>, <span class="hljs-type">Tuple</span>
+<span class="hljs-keyword">import</span> math
+<span class="hljs-keyword">import</span> time
+
+<span class="hljs-comment"># This interface cannot be changed by the LLM</span>
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">Context</span>(<span class="hljs-title class_ inherited__">ABC</span>):
+<span class="hljs-meta">    @property</span>
+<span class="hljs-meta">    @abstractmethod</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">instance</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">float</span>, <span class="hljs-built_in">float</span>]]:
+        <span class="hljs-keyword">pass</span>
+
+<span class="hljs-meta">    @abstractmethod</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">remaining_time</span>(<span class="hljs-params">self</span>) -&gt; timedelta:
+        <span class="hljs-keyword">pass</span>
+
+<span class="hljs-meta">    @abstractmethod</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">report_new_best_solution</span>(<span class="hljs-params">self, solution: <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>]</span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-keyword">pass</span>
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">calculate_distance</span>(<span class="hljs-params">city1: <span class="hljs-type">Tuple</span>[<span class="hljs-built_in">float</span>, <span class="hljs-built_in">float</span>], city2: <span class="hljs-type">Tuple</span>[<span class="hljs-built_in">float</span>, <span class="hljs-built_in">float</span>]</span>) -&gt; <span class="hljs-built_in">float</span>:
+    <span class="hljs-string">&quot;&quot;&quot;Calculates the Euclidean distance between two cities.&quot;&quot;&quot;</span>
+    <span class="hljs-keyword">return</span> math.sqrt((city1[<span class="hljs-number">0</span>] - city2[<span class="hljs-number">0</span>]) ** <span class="hljs-number">2</span> + (city1[<span class="hljs-number">1</span>] - city2[<span class="hljs-number">1</span>]) ** <span class="hljs-number">2</span>)
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">calculate_tour_length</span>(<span class="hljs-params">tour: <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>], instance: <span class="hljs-type">List</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">float</span>, <span class="hljs-built_in">float</span>]]</span>) -&gt; <span class="hljs-built_in">float</span>:
+    <span class="hljs-string">&quot;&quot;&quot;Calculates the total distance of a tour.&quot;&quot;&quot;</span>
+    total_distance = <span class="hljs-number">0.0</span>
+    num_cities = <span class="hljs-built_in">len</span>(tour)
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_cities):
+        city1_index = tour[i]
+        city2_index = tour[(i + <span class="hljs-number">1</span>) % num_cities]  <span class="hljs-comment"># Wrap around to the start</span>
+        city1 = instance[city1_index]
+        city2 = instance[city2_index]
+        total_distance += calculate_distance(city1, city2)
+    <span class="hljs-keyword">return</span> total_distance
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">nearest_neighbor</span>(<span class="hljs-params">start_city: <span class="hljs-built_in">int</span>, instance: <span class="hljs-type">List</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">float</span>, <span class="hljs-built_in">float</span>]]</span>) -&gt; <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>]:
+    <span class="hljs-string">&quot;&quot;&quot;Constructs a tour using the nearest neighbor heuristic in-place.&quot;&quot;&quot;</span>
+    num_cities = <span class="hljs-built_in">len</span>(instance)
+    tour = <span class="hljs-built_in">list</span>(<span class="hljs-built_in">range</span>(num_cities))
+    tour[<span class="hljs-number">0</span>], tour[start_city] = tour[start_city], tour[<span class="hljs-number">0</span>]  <span class="hljs-comment"># Move start city to the beginning</span>
+    current_city = <span class="hljs-number">0</span>
+
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">1</span>, num_cities):
+        best_neighbor = i
+        best_distance = calculate_distance(instance[tour[current_city]], instance[tour[i]])
+
+        <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(i + <span class="hljs-number">1</span>, num_cities):
+            distance = calculate_distance(instance[tour[current_city]], instance[tour[j]])
+            <span class="hljs-keyword">if</span> distance &lt; best_distance:
+                best_distance = distance
+                best_neighbor = j
+
+        tour[i], tour[best_neighbor] = tour[best_neighbor], tour[i]  <span class="hljs-comment"># Swap in-place</span>
+        current_city = i
+
+    <span class="hljs-keyword">return</span> tour
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">two_opt_swap</span>(<span class="hljs-params">tour: <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>], i: <span class="hljs-built_in">int</span>, k: <span class="hljs-built_in">int</span></span>) -&gt; <span class="hljs-literal">None</span>:
+    <span class="hljs-string">&quot;&quot;&quot;Performs a 2-opt swap on a tour in-place using slice reversal.&quot;&quot;&quot;</span>
+    tour[i:k+<span class="hljs-number">1</span>] = tour[i:k+<span class="hljs-number">1</span>][::-<span class="hljs-number">1</span>]
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">two_opt</span>(<span class="hljs-params">tour: <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>], instance: <span class="hljs-type">List</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">float</span>, <span class="hljs-built_in">float</span>]], distances: <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">float</span>]], distance_threshold_percentage: <span class="hljs-built_in">float</span></span>) -&gt; <span class="hljs-literal">None</span>:
+    <span class="hljs-string">&quot;&quot;&quot;Improves a tour using the 2-opt heuristic in-place with first-improvement strategy and pre-calculated distances.&quot;&quot;&quot;</span>
+    n = <span class="hljs-built_in">len</span>(tour)
+    improved = <span class="hljs-literal">True</span>
+    tour_length = calculate_tour_length(tour, instance)
+    distance_threshold = tour_length * distance_threshold_percentage
+
+    <span class="hljs-keyword">while</span> improved:
+        improved = <span class="hljs-literal">False</span>
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">1</span>, n - <span class="hljs-number">1</span>):
+            <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(i + <span class="hljs-number">1</span>, n):
+                i_minus_1 = tour[i - <span class="hljs-number">1</span>]
+                i_city = tour[i]
+                k_city = tour[k]
+                k_plus_1 = tour[(k + <span class="hljs-number">1</span>) % n]
+
+                delta = distances[i_minus_1][k_city] + distances[i_city][k_plus_1] - distances[i_minus_1][i_city] - distances[k_city][k_plus_1]
+
+                <span class="hljs-keyword">if</span> delta &lt; -distance_threshold:
+                    two_opt_swap(tour, i, k)
+                    tour_length += delta
+                    distance_threshold = tour_length * distance_threshold_percentage
+                    improved = <span class="hljs-literal">True</span>
+                    <span class="hljs-keyword">break</span>
+            <span class="hljs-keyword">if</span> improved:
+                <span class="hljs-keyword">break</span>
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">solve</span>(<span class="hljs-params">context: Context</span>) -&gt; <span class="hljs-literal">None</span>:
+    num_cities = <span class="hljs-built_in">len</span>(context.instance)
+    best_solution = <span class="hljs-built_in">list</span>(<span class="hljs-built_in">range</span>(num_cities))
+    random.shuffle(best_solution)
+    best_solution_length = calculate_tour_length(best_solution, context.instance)
+
+    <span class="hljs-comment"># Pre-calculate distances</span>
+    distances = [[calculate_distance(context.instance[i], context.instance[j]) <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_cities)] <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_cities)]
+
+    max_iterations = <span class="hljs-number">30000</span>
+    iteration = <span class="hljs-number">0</span>
+    time_check_interval = <span class="hljs-number">500</span>  <span class="hljs-comment"># Check remaining time every 500 iterations</span>
+
+    <span class="hljs-comment"># Centroid initialization</span>
+    centroid_x = <span class="hljs-built_in">sum</span>(city[<span class="hljs-number">0</span>] <span class="hljs-keyword">for</span> city <span class="hljs-keyword">in</span> context.instance) / num_cities
+    centroid_y = <span class="hljs-built_in">sum</span>(city[<span class="hljs-number">1</span>] <span class="hljs-keyword">for</span> city <span class="hljs-keyword">in</span> context.instance) / num_cities
+    city_distances_to_centroid = [calculate_distance((centroid_x, centroid_y), city) <span class="hljs-keyword">for</span> city <span class="hljs-keyword">in</span> context.instance]
+    total_distance_to_centroid = <span class="hljs-built_in">sum</span>(city_distances_to_centroid)
+    city_probabilities = [distance / total_distance_to_centroid <span class="hljs-keyword">for</span> distance <span class="hljs-keyword">in</span> city_distances_to_centroid]
+
+    start_time = time.time()
+    iteration_time_sum = <span class="hljs-number">0.0</span>
+    iteration_count = <span class="hljs-number">0</span>
+    time_limit = context.remaining_time().total_seconds() * <span class="hljs-number">0.965</span>  <span class="hljs-comment"># Further reduce the time for computation</span>
+    max_possible_iterations = <span class="hljs-number">1000000</span>
+
+    distance_threshold_percentage = <span class="hljs-number">0.000045</span>  <span class="hljs-comment"># Adjusted threshold</span>
+
+    initial_iterations = <span class="hljs-built_in">min</span>(<span class="hljs-number">5000</span>, num_cities * <span class="hljs-number">4</span>)  <span class="hljs-comment"># Adjust initial iterations based on problem size</span>
+
+    num_nn_starts = <span class="hljs-built_in">min</span>(<span class="hljs-number">12</span>, num_cities) <span class="hljs-comment"># Increased number of NN starts</span>
+
+
+    <span class="hljs-comment"># Generate multiple initial tours and pick the best</span>
+    best_initial_tour = <span class="hljs-literal">None</span>
+    best_initial_tour_length = <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;inf&#x27;</span>)
+    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_nn_starts):
+        <span class="hljs-keyword">if</span> context.remaining_time() &lt; timedelta(seconds=<span class="hljs-number">0.01</span>):
+            <span class="hljs-keyword">break</span>
+        start_city = random.choices(<span class="hljs-built_in">range</span>(num_cities), weights=city_probabilities, k=<span class="hljs-number">1</span>)[<span class="hljs-number">0</span>]
+
+        initial_tour = nearest_neighbor(start_city, context.instance)
+
+        two_opt(initial_tour, context.instance, distances, distance_threshold_percentage)  <span class="hljs-comment"># In-place modification</span>
+
+        tour_length = calculate_tour_length(initial_tour, context.instance)
+        <span class="hljs-keyword">if</span> tour_length &lt; best_initial_tour_length:
+            best_initial_tour_length = tour_length
+            best_initial_tour = initial_tour[:]
+
+
+    best_solution = best_initial_tour[:]
+    best_solution_length = best_initial_tour_length
+
+
+    <span class="hljs-keyword">while</span> context.remaining_time() &gt; timedelta(seconds=<span class="hljs-number">0.03</span>) <span class="hljs-keyword">and</span> iteration &lt; max_iterations:
+        iteration_start_time = time.time()
+
+        <span class="hljs-comment"># Perturb the current best solution</span>
+        perturbed_tour = best_solution[:]
+        i = random.randint(<span class="hljs-number">0</span>, num_cities - <span class="hljs-number">2</span>)
+        k = random.randint(i + <span class="hljs-number">1</span>, num_cities - <span class="hljs-number">1</span>)
+        two_opt_swap(perturbed_tour, i, k)
+
+
+        two_opt(perturbed_tour, context.instance, distances, distance_threshold_percentage)  <span class="hljs-comment"># In-place modification</span>
+        tour_length = calculate_tour_length(perturbed_tour, context.instance)
+
+        <span class="hljs-keyword">if</span> tour_length &lt; best_solution_length:
+            best_solution_length = tour_length
+            best_solution = perturbed_tour[:]  <span class="hljs-comment"># Copy before reporting</span>
+            <span class="hljs-keyword">if</span> context.remaining_time() &gt; timedelta(seconds=<span class="hljs-number">0.02</span>):  <span class="hljs-comment"># Adjust threshold</span>
+                context.report_new_best_solution(best_solution)
+
+
+        iteration += <span class="hljs-number">1</span>
+
+        iteration_end_time = time.time()
+        iteration_time = iteration_end_time - iteration_start_time
+        iteration_time_sum += iteration_time
+        iteration_count += <span class="hljs-number">1</span>
+
+        <span class="hljs-keyword">if</span> (iteration_count &gt; initial_iterations <span class="hljs-keyword">and</span> iteration % <span class="hljs-number">100</span> == <span class="hljs-number">0</span>) :  <span class="hljs-comment"># Ensure enough iterations to get a good average</span>
+            avg_iteration_time = iteration_time_sum / iteration_count
+            remaining_time = context.remaining_time().total_seconds()
+            max_iterations = <span class="hljs-built_in">min</span>(max_possible_iterations, <span class="hljs-built_in">int</span>(remaining_time / avg_iteration_time * <span class="hljs-number">0.9</span>))  <span class="hljs-comment"># Conservative estimate</span>
+
+        <span class="hljs-comment"># Early stopping check</span>
+        <span class="hljs-keyword">if</span> iteration_count &gt; initial_iterations:
+            estimated_remaining_iterations = (time_limit - (time.time() - start_time)) / avg_iteration_time
+            <span class="hljs-keyword">if</span> iteration + estimated_remaining_iterations &gt; max_iterations:
+                <span class="hljs-keyword">break</span>
+</code></pre>
+<h2>Conclusion</h2>
+<p>Optiverse did not identify a fundamentally new approach to solving the TSP, but it successfully constructed a solid and practical heuristic from scratch using the problem definition, evaluation feedback, and a previous-generation LLM (Gemini Flash 2.0) within 100 iterations.</p>
+<p>It's not clear if this approach will ever lead to truly groundbreaking discoveries, but to me, it seems like an interesting area to keep exploring.</p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>
