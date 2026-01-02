@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speed Up Your CI/CD Pipeline with Change-Based Testing in a Yarn-Based Monorepo</title>
+
+    <meta property="og:title" content="Speed Up Your CI/CD Pipeline with Change-Based Testing in a Yarn-Based Monorepo" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2024-05-17T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/ci-cd-pipeline-change-based-testing-yarn-based-monorepo" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>Speed Up Your CI/CD Pipeline with Change-Based Testing in a Yarn-Based Monorepo</h1>
+    <p>May 2024</p>
+  </hgroup>
+
+  <p>Monorepos offer a centralized location for all your project's codebases, simplifying management. However, this convenience comes with a challenge: CI/CD pipelines often struggle with large monorepos, leading to lengthy pull request run times due to full test suite execution. This can significantly hinder developer workflow and productivity.</p>
+<p>Change-based testing is an optimization technique specifically designed to address this challenge in monorepos. It focuses on streamlining pull request workflows in large codebases by strategically running tests only on the specific changes introduced in a pull request, rather than the entire codebase. This approach significantly reduces pull request run times, allowing developers to iterate faster.</p>
+<p>Imagine modifying a single package within your monorepo. Change-based testing ensures that only the tests for that package, and any dependent packages that might be affected by your changes, are executed. This targeted approach dramatically reduces test execution time.</p>
+<h2>Implementation: A GitHub Actions Example</h2>
+<p>We'll showcase how to implement change-based testing in a Yarn-based monorepo using GitHub Actions. While the specifics are tailored to this platform, the fundamental concepts can be adapted for other CI/CD tools like GitLab CI/CD.</p>
+<h3>Demo Project Overview</h3>
+<p>The demo monorepo <a href="https://github.com/larose/yarn-monorepo-change-based-testing-demo">yarn-monorepo-change-based-testing-demo</a> uses Yarn for package management. It simulates a codebase with 100 randomly generated TypeScript packages within the <a href="https://github.com/larose/yarn-monorepo-change-based-testing-demo/tree/main/packages"><code>packages</code></a> directory. Each package can have dependencies on other packages within the monorepo. We'll focus on two checks: linting with ESLint and type checking with the TypeScript compiler (tsc).</p>
+<h3>Main Workflow Breakdown</h3>
+<p>The workflow, named <a href="https://github.com/larose/yarn-monorepo-change-based-testing-demo/blob/main/.github/workflows/main.yml"><code>main</code></a>, is triggered by two events:</p>
+<ul>
+<li>Pull requests targeting the <code>main</code> branch.</li>
+<li>Direct pushes to the <code>main</code> branch (after a pull request is merged).</li>
+</ul>
+<p>The workflow has a single job that uses a matrix strategy to run concurrent child jobs for linting and type checking.</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">name:</span> <span class="hljs-string">Main</span>
+
+<span class="hljs-attr">on:</span>
+  <span class="hljs-attr">pull_request:</span>
+    <span class="hljs-attr">branches:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">main</span>
+
+  <span class="hljs-attr">push:</span>
+    <span class="hljs-attr">branches:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">main</span>
+
+<span class="hljs-attr">jobs:</span>
+  <span class="hljs-attr">main:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-22.04</span>
+    <span class="hljs-attr">strategy:</span>
+      <span class="hljs-attr">fail-fast:</span> <span class="hljs-literal">false</span>
+      <span class="hljs-attr">matrix:</span>
+        <span class="hljs-attr">command:</span> [<span class="hljs-string">&quot;lint&quot;</span>, <span class="hljs-string">&quot;typecheck&quot;</span>]
+</code></pre>
+<p>The first three steps are common setup tasks: installing Node.js, checking out the code, and installing dependencies:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-attr">steps:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Setup</span> <span class="hljs-string">Node</span>
+    <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/setup-node@v4</span>
+    <span class="hljs-attr">with:</span>
+      <span class="hljs-attr">node-version:</span> <span class="hljs-number">20</span>
+
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Checkout</span>
+    <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v4</span>
+    <span class="hljs-attr">with:</span>
+      <span class="hljs-attr">fetch-depth:</span> <span class="hljs-number">0</span>
+
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Install</span> <span class="hljs-string">Dependencies</span>
+    <span class="hljs-attr">run:</span> <span class="hljs-string">|
+      corepack enable
+      yarn install
+</span></code></pre>
+<p>The key part is how the workflow determines which test mode to use based on the trigger event.</p>
+<p>If the workflow is triggered by a pull request, the <code>Set Change-Based Test Selection</code> step sets a variable <code>change-based-test-selection</code> to <code>true</code>. This variable controls the test selection in a subsequent step.</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Set</span> <span class="hljs-string">Change-Based</span> <span class="hljs-string">Test</span> <span class="hljs-string">Selection</span>
+  <span class="hljs-attr">id:</span> <span class="hljs-string">set-test-selection</span>
+  <span class="hljs-attr">if:</span> <span class="hljs-string">${{</span> <span class="hljs-string">github.event_name</span> <span class="hljs-string">==</span> <span class="hljs-string">&#x27;pull_request&#x27;</span> <span class="hljs-string">}}</span>
+  <span class="hljs-attr">run:</span> <span class="hljs-string">|
+    echo &quot;change-based-test-selection=true&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+</span></code></pre>
+<p>Then, the <code>Run ${{ matrix.command }}</code> step (expanded to <code>Run lint</code> and <code>Run typecheck</code>) passes the <code>change-based-test-selection</code> variable to the makefile through the <code>CHANGE_BASED_TEST_SELECTION</code> variable:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Run</span> <span class="hljs-string">${{</span> <span class="hljs-string">matrix.command</span> <span class="hljs-string">}}</span>
+  <span class="hljs-attr">run:</span> <span class="hljs-string">|
+    CHANGE_BASED_TEST_SELECTION=${{ steps.set-test-selection.outputs.change-based-test-selection }} \
+      make ${{ matrix.command }}
+</span></code></pre>
+<p>Here's the makefile:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">ifdef</span> CHANGE_BASED_TEST_SELECTION
+  PACKAGE_SELECTION_FLAG := --since --recursive
+<span class="hljs-keyword">else</span>
+  PACKAGE_SELECTION_FLAG := --all
+<span class="hljs-keyword">endif</span>
+
+FOR_EACH_CMD := yarn workspaces foreach <span class="hljs-variable">$(PACKAGE_SELECTION_FLAG)</span> --topological --exclude root -vv
+
+<span class="hljs-meta"><span class="hljs-keyword">.PHONY</span>: lint</span>
+<span class="hljs-section">lint:</span>
+	<span class="hljs-variable">$(FOR_EACH_CMD)</span> exec eslint src
+
+<span class="hljs-meta"><span class="hljs-keyword">.PHONY</span>: typecheck</span>
+<span class="hljs-section">typecheck:</span>
+	<span class="hljs-variable">$(FOR_EACH_CMD)</span> exec tsc --noEmit
+</code></pre>
+<p>The first part sets the <code>PACKAGE_SELECTION_FLAG</code> variable which controls how the <code>yarn workspaces foreach</code> command selects the packages.</p>
+<p>If <code>CHANGE_BASED_TEST_SELECTION</code> is defined, <code>PACKAGE_SELECTION_FLAG</code> is set to <code>--since --recursive</code>. This configuration ensures that only the packages with changes compared to the <code>origin/main</code> branch are selected (<code>--since</code> flag), and it recursively includes their dependent packages, their reverse dependencies (<code>--recursive</code> flag).</p>
+<p>Otherwise, we select all packages (<code>--all</code> flag).</p>
+<p>We then pass the <code>PACKAGE_SELECTION_FLAG</code> to the <code>yarn workspaces foreach</code> command.</p>
+<h2>Example in Action</h2>
+<p>Here's the screenshot of a full run:</p>
+<p><img src="ci-cd-pipeline-change-based-testing-yarn-based-monorepo/full-run.png" alt=""></p>
+<p><img src="ci-cd-pipeline-change-based-testing-yarn-based-monorepo/full-run-details.png" alt=""></p>
+<p>It took almost 8 minutes.</p>
+<p>And here's the screenshot of a run in a pull request where one package was changed, affecting 6 dependent packages (for a total of 7 packages):</p>
+<p><img src="ci-cd-pipeline-change-based-testing-yarn-based-monorepo/change-based-run.png" alt=""></p>
+<p><img src="ci-cd-pipeline-change-based-testing-yarn-based-monorepo/change-based-details.png" alt=""></p>
+<p>It took less than a minute.</p>
+<p>Keep in mind, this is a toy monorepo, so reducing test times from 8 minutes to 1 minute may not seem significant. However, in a real-life monorepo, decreasing test times, say, from 45 minutes to under 10 minutes represents a substantial improvement in both developer productivity and CI/CD costs.</p>
+<h2>Local Development</h2>
+<p>One of the beauties of using a makefile (or any other script outside the GitHub Actions YAML file) is that you can enjoy the same benefits locally. When calling <code>make lint</code> or <code>make typecheck</code>, simply sets <code>CHANGE_BASED_TEST_SELECTION</code> to any value to experience the speed boost of change-based testing on your local machine:</p>
+<pre class="hljs"><code class="hljs">$ CHANGE_BASED_TEST_SELECTION=true make lint
+</code></pre>
+<h2>Conclusion</h2>
+<p>Change-based testing offers a significant boost for monorepos. By intelligently targeting tests to changed areas, you can streamline pull request workflows and improve developer productivity. Faster pull request runs lead to quicker feedback and a smoother development experience. Additionally, you might see a reduction in CI/CD resource consumption due to fewer tests running.</p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>

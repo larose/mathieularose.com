@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How Authorization is Implemented in Libredesk</title>
+
+    <meta property="og:title" content="How Authorization is Implemented in Libredesk" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2025-03-15T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/libredesk-authorization" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>How Authorization is Implemented in Libredesk</h1>
+    <p>March 2025</p>
+  </hgroup>
+
+  <h2>Introduction</h2>
+<p><a href="https://github.com/abhinavxd/libredesk">Libredesk</a> was recently featured on <a href="https://news.ycombinator.com/item?id=43158166">Hacker News</a>, and as someone who has worked a lot on authorization in various organizations, I was curious to explore how it is implemented.</p>
+<p>A quick disclaimer: this is my interpretation of the current state of Libredesk. The project is still in its alpha stage, and its implementation may evolve. Additionally, I may have overlooked some details.</p>
+<h2>Summary</h2>
+<p>At a high level, Libredesk relies primarily on role-based access control (RBAC), with elements of relationship-based access control (ReBAC) for managing access to key resources like conversations and their associated content (e.g., messages within a conversation).</p>
+<p>The system includes two default roles: admin and agent. Admins have full access, while agents, by default, can view or manage all conversations.</p>
+<p>By default, authorization in Libredesk follows an all-or-nothing approach: a signed-in user with one of these roles can access all conversations, while others have no access.</p>
+<p>However, Libredesk also supports more granular access control, allowing restrictions such as limiting agents to only their assigned conversations or their team's conversations, aligning with ReBAC principles.</p>
+<p>For example, a new role could be created where an agent only sees their team's conversations, whereas the current agent role functions more like a supervisor role.</p>
+<p>That said, granular access is not consistently enforced across all areas of the system (see lack of permissions-aware data filtering below).</p>
+<h2>Implementation</h2>
+<h3>Where authorization is stored</h3>
+<p>Authorization data is stored in a SQL database. The <a href="https://github.com/abhinavxd/libredesk/blob/3aad69fc520590b43c644b89173174d58923babf/schema.sql">database schema</a> has the following tables:</p>
+<p>A <code>roles</code> table with a list of permissions for each role:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> roles (
+    id SERIAL <span class="hljs-keyword">PRIMARY</span> KEY,
+    ...
+    permissions TEXT[] <span class="hljs-keyword">DEFAULT</span> <span class="hljs-string">&#x27;{}&#x27;</span>::TEXT[] <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+    &quot;name&quot; TEXT <span class="hljs-keyword">UNIQUE</span> <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+    description TEXT <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-keyword">CONSTRAINT</span> constraint_roles_on_name <span class="hljs-keyword">CHECK</span> (length(&quot;name&quot;) <span class="hljs-operator">&lt;=</span> <span class="hljs-number">50</span>),
+  <span class="hljs-keyword">CONSTRAINT</span> constraint_roles_on_description <span class="hljs-keyword">CHECK</span> (length(description) <span class="hljs-operator">&lt;=</span> <span class="hljs-number">300</span>)
+);
+</code></pre>
+<p>A <code>users</code> table:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> users (
+    id BIGSERIAL <span class="hljs-keyword">PRIMARY</span> KEY,
+    ...
+    email TEXT <span class="hljs-keyword">NULL</span>,
+    first_name TEXT <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+    last_name TEXT <span class="hljs-keyword">NULL</span>,
+    ...
+);
+</code></pre>
+<p>And a <code>user_roles</code> table to assign roles to users:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> user_roles (
+  id SERIAL <span class="hljs-keyword">PRIMARY</span> KEY,
+  ...
+  user_id <span class="hljs-type">INT</span> <span class="hljs-keyword">REFERENCES</span> users(id) <span class="hljs-keyword">ON</span> <span class="hljs-keyword">DELETE</span> CASCADE <span class="hljs-keyword">ON</span> <span class="hljs-keyword">UPDATE</span> CASCADE <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  role_id <span class="hljs-type">INT</span> <span class="hljs-keyword">REFERENCES</span> roles(id) <span class="hljs-keyword">ON</span> <span class="hljs-keyword">DELETE</span> CASCADE <span class="hljs-keyword">ON</span> <span class="hljs-keyword">UPDATE</span> CASCADE <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+
+  <span class="hljs-keyword">CONSTRAINT</span> constraint_user_roles_on_user_id_and_role_id_unique <span class="hljs-keyword">UNIQUE</span> (user_id, role_id)
+);
+</code></pre>
+<p>And then two default roles - Agent and Admin:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span>
+  roles (&quot;name&quot;, description, permissions)
+<span class="hljs-keyword">VALUES</span>
+  (
+    <span class="hljs-string">&#x27;Agent&#x27;</span>,
+    <span class="hljs-string">&#x27;Role for all agents with limited access to conversations.&#x27;</span>,
+    <span class="hljs-string">&#x27;{conversations:read_all,conversations:read_unassigned,conversations:read_assigned,conversations:read_team_inbox,conversations:read,conversations:update_user_assignee,conversations:update_team_assignee,conversations:update_priority,conversations:update_status,conversations:update_tags,messages:read,messages:write,view:manage}&#x27;</span>
+  );
+
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span>
+  roles (&quot;name&quot;, description, permissions)
+<span class="hljs-keyword">VALUES</span>
+  (
+    <span class="hljs-string">&#x27;Admin&#x27;</span>,
+    <span class="hljs-string">&#x27;Role for users who have complete access to everything.&#x27;</span>,
+    <span class="hljs-string">&#x27;{ai:manage,general_settings:manage,notification_settings:manage,oidc:manage,conversations:read_all,conversations:read_unassigned,conversations:read_assigned,conversations:read_team_inbox,conversations:read,conversations:update_user_assignee,conversations:update_team_assignee,conversations:update_priority,conversations:update_status,conversations:update_tags,messages:read,messages:write,view:manage,status:manage,tags:manage,macros:manage,users:manage,teams:manage,automations:manage,inboxes:manage,roles:manage,reports:manage,templates:manage,business_hours:manage,sla:manage}&#x27;</span>
+  );
+</code></pre>
+<h3>Where authorization is enforced</h3>
+<p>Libredesk is an single-page app with an API backend. Authorization is enforced on each API endpoint using a <code>perm</code> middleware in <a href="https://github.com/abhinavxd/libredesk/blob/3aad69fc520590b43c644b89173174d58923babf/cmd/handlers.go#L47"><code>handlers.go</code></a>:</p>
+<pre class="hljs"><code class="hljs">  g.GET(<span class="hljs-string">&quot;/api/v1/conversations/all&quot;</span>, perm(handleGetAllConversations, <span class="hljs-string">&quot;conversations:read_all&quot;</span>))
+  g.GET(<span class="hljs-string">&quot;/api/v1/conversations/unassigned&quot;</span>, perm(handleGetUnassignedConversations, <span class="hljs-string">&quot;conversations:read_unassigned&quot;</span>))
+  g.GET(<span class="hljs-string">&quot;/api/v1/conversations/assigned&quot;</span>, perm(handleGetAssignedConversations, <span class="hljs-string">&quot;conversations:read_assigned&quot;</span>))
+  g.GET(<span class="hljs-string">&quot;/api/v1/teams/{id}/conversations/unassigned&quot;</span>, perm(handleGetTeamUnassignedConversations, <span class="hljs-string">&quot;conversations:read_team_inbox&quot;</span>))
+  g.GET(<span class="hljs-string">&quot;/api/v1/views/{id}/conversations&quot;</span>, perm(handleGetViewConversations, <span class="hljs-string">&quot;conversations:read&quot;</span>))
+...
+</code></pre>
+<p>The <a href="https://github.com/abhinavxd/libredesk/blob/3aad69fc520590b43c644b89173174d58923babf/cmd/middlewares.go#L73"><code>perms</code></a> function retrieves the user's session and calls <a href="https://github.com/abhinavxd/libredesk/blob/3aad69fc520590b43c644b89173174d58923babf/internal/authz/authz.go#L77"><code>Enforce</code></a> which wraps <a href="https://casbin.org/">Casbin</a>, an open-source authorization library.</p>
+<p>While Casbin is capable of ReBAC, Libredesk primarily uses it for RBAC, with custom ReBAC logic implemented on top of it.</p>
+<p>Libredesk's Casbin model:</p>
+<pre class="hljs"><code class="hljs">[request_definition]
+r = sub, obj, act
+
+[policy_definition]
+p = sub, obj, act
+
+[policy_effect]
+e = some(where (p.eft == allow))
+
+[matchers]
+m = r.sub == p.sub &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act
+</code></pre>
+<p>This model grants users (<code>sub</code>) permission to perform an action (<code>act</code>) on a resource type (<code>obj</code>) rather than on specific objects, effectively making it an RBAC implementation (and not ReBAC).</p>
+<p>However, <a href="https://github.com/abhinavxd/libredesk/blob/8d8f08e1d288a02f1bab9efc9a17d7b21d15f154/internal/authz/authz.go#L98"><code>EnforceConversationAccess</code></a> constains a custom ReBAC logic:</p>
+<pre class="hljs"><code class="hljs">	<span class="hljs-keyword">if</span> conversation.AssignedUserID.Int == user.ID {
+		<span class="hljs-keyword">if</span> allowed, err := checkPermission(<span class="hljs-string">&quot;read_assigned&quot;</span>); err != <span class="hljs-literal">nil</span> || allowed {
+			<span class="hljs-keyword">return</span> allowed, err
+		}
+	}
+</code></pre>
+<p>Similarly, for team access:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-comment">// Check `read_team_inbox` permission for team-assigned conversations</span>
+	<span class="hljs-keyword">if</span> conversation.AssignedTeamID.Int &gt; <span class="hljs-number">0</span> &amp;&amp; slices.Contains(user.Teams.IDs(), conversation.AssignedTeamID.Int) &amp;&amp; conversation.AssignedUserID.Int == <span class="hljs-number">0</span> {
+		<span class="hljs-keyword">if</span> allowed, err := checkPermission(<span class="hljs-string">&quot;read_team_inbox&quot;</span>); err != <span class="hljs-literal">nil</span> || allowed {
+			<span class="hljs-keyword">return</span> allowed, err
+		}
+	}
+</code></pre>
+<h2>Considerations</h2>
+<h3>Lack of permissions-aware data filtering</h3>
+<p>When filtering resources like conversations or messages, there is no per-resource permission filtering, beyond checking if a user has <code>conversations:read</code> or <code>messages:read</code> permissions. This results in an all-or-nothing access model.</p>
+<h2><code>EnforceMediaAccess</code></h2>
+<p>In <a href="https://github.com/abhinavxd/libredesk/blob/8d8f08e1d288a02f1bab9efc9a17d7b21d15f154/internal/authz/authz.go#L145"><code>EnforceMediaAccess</code></a>, access is granted by default when the model is unknown:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(e *Enforcer)</span></span> EnforceMediaAccess(user umodels.User, model <span class="hljs-type">string</span>) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) {
+	<span class="hljs-keyword">switch</span> model {
+	<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;messages&quot;</span>:
+		allowed, err := e.Enforce(user, model, <span class="hljs-string">&quot;read&quot;</span>)
+		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+			<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, envelope.NewError(envelope.GeneralError, <span class="hljs-string">&quot;Error checking permissions&quot;</span>, <span class="hljs-literal">nil</span>)
+		}
+		<span class="hljs-keyword">if</span> !allowed {
+			<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, envelope.NewError(envelope.UnauthorizedError, <span class="hljs-string">&quot;Permission denied&quot;</span>, <span class="hljs-literal">nil</span>)
+		}
+	<span class="hljs-keyword">default</span>:
+		<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span>
+	}
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<h2>Conclusion</h2>
+<p>Libredesk's authorization implementation is good for a small team, where users have broad access. With the <code>perm</code> middleware, every endpoint is protected from anonymous access. However, achieving more granular access control will require additional work, which is expected for an alpha-stage project.</p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>

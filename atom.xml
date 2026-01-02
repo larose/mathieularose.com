@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://mathieularose.com</id>
+    <title>Mathieu Larose</title>
+    <updated>2026-01-02T00:00:00.000Z</updated>
+    <generator>FooBar</generator>
+    <entry>
+        <title type="html"><![CDATA[Authorization as a Service: Data Filtering is Still Hard]]></title>
+        <id>https://mathieularose.com/authorization-as-a-service-data-filtering-is-still-hard</id>
+        <link href="https://mathieularose.com/authorization-as-a-service-data-filtering-is-still-hard"/>
+        <updated>2026-01-02T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Rethinking Git Pre-Commit Hooks]]></title>
+        <id>https://mathieularose.com/rethinking-git-pre-commit-hooks</id>
+        <link href="https://mathieularose.com/rethinking-git-pre-commit-hooks"/>
+        <updated>2025-12-07T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Exploring Safe Withdrawal Rates with Monte Carlo Simulations]]></title>
+        <id>https://mathieularose.com/exploring-safe-withdrawal-rates-with-monte-carlo-simulations</id>
+        <link href="https://mathieularose.com/exploring-safe-withdrawal-rates-with-monte-carlo-simulations"/>
+        <updated>2025-10-07T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Evolving Integer Compression Algorithms with LLMs]]></title>
+        <id>https://mathieularose.com/evolving-integer-compression-algorithms-with-llms</id>
+        <link href="https://mathieularose.com/evolving-integer-compression-algorithms-with-llms"/>
+        <updated>2025-08-02T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Optiverse: Evolving Code with LLMs]]></title>
+        <id>https://mathieularose.com/optiverse-evolving-code-with-llms</id>
+        <link href="https://mathieularose.com/optiverse-evolving-code-with-llms"/>
+        <updated>2025-07-10T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[How Authorization is Implemented in Libredesk]]></title>
+        <id>https://mathieularose.com/libredesk-authorization</id>
+        <link href="https://mathieularose.com/libredesk-authorization"/>
+        <updated>2025-03-15T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[hnsync: A Hacker News Sync Tool]]></title>
+        <id>https://mathieularose.com/hnsync</id>
+        <link href="https://mathieularose.com/hnsync"/>
+        <updated>2024-11-24T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Securing CI/CD Pipelines with Egress Filtering]]></title>
+        <id>https://mathieularose.com/securing-ci-cd-pipelines-with-egress-filtering</id>
+        <link href="https://mathieularose.com/securing-ci-cd-pipelines-with-egress-filtering"/>
+        <updated>2024-06-30T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Back Up Your Git Repositories to S3 or Any S3-Compatible Storage]]></title>
+        <id>https://mathieularose.com/back-up-your-git-repositories-to-s3</id>
+        <link href="https://mathieularose.com/back-up-your-git-repositories-to-s3"/>
+        <updated>2024-06-02T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Write Readable Commands with Long Options]]></title>
+        <id>https://mathieularose.com/write-readable-commands-with-long-options</id>
+        <link href="https://mathieularose.com/write-readable-commands-with-long-options"/>
+        <updated>2024-05-20T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Speed Up Your CI/CD Pipeline with Change-Based Testing in a Yarn-Based Monorepo]]></title>
+        <id>https://mathieularose.com/ci-cd-pipeline-change-based-testing-yarn-based-monorepo</id>
+        <link href="https://mathieularose.com/ci-cd-pipeline-change-based-testing-yarn-based-monorepo"/>
+        <updated>2024-05-17T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Building a GitOps CI/CD Pipeline with GitHub Actions (SOC 2)]]></title>
+        <id>https://mathieularose.com/gitops-cicd-github-actions</id>
+        <link href="https://mathieularose.com/gitops-cicd-github-actions"/>
+        <updated>2024-04-28T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Changelog-Driven Releases]]></title>
+        <id>https://mathieularose.com/changelog-driven-releases</id>
+        <link href="https://mathieularose.com/changelog-driven-releases"/>
+        <updated>2024-04-20T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Financial Tips For Young Software Developers]]></title>
+        <id>https://mathieularose.com/financial-tips-for-young-software-developers</id>
+        <link href="https://mathieularose.com/financial-tips-for-young-software-developers"/>
+        <updated>2024-03-25T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Local .gitignore files]]></title>
+        <id>https://mathieularose.com/local-gitignore-files</id>
+        <link href="https://mathieularose.com/local-gitignore-files"/>
+        <updated>2024-02-16T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Unicode and UTF-8]]></title>
+        <id>https://mathieularose.com/unicode-and-utf-8</id>
+        <link href="https://mathieularose.com/unicode-and-utf-8"/>
+        <updated>2020-12-13T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[GitHub Commit Injection]]></title>
+        <id>https://mathieularose.com/github-commit-injection</id>
+        <link href="https://mathieularose.com/github-commit-injection"/>
+        <updated>2020-10-12T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[How to Design and Implement a Plugin Architecture in Python]]></title>
+        <id>https://mathieularose.com/plugin-architecture-in-python</id>
+        <link href="https://mathieularose.com/plugin-architecture-in-python"/>
+        <updated>2020-07-19T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Main function in Node.js]]></title>
+        <id>https://mathieularose.com/main-function-in-node-js</id>
+        <link href="https://mathieularose.com/main-function-in-node-js"/>
+        <updated>2020-06-21T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen]]></title>
+        <id>https://mathieularose.com/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen</id>
+        <link href="https://mathieularose.com/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen"/>
+        <updated>2020-04-05T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[How to Log in JSON with Logback]]></title>
+        <id>https://mathieularose.com/logback-json</id>
+        <link href="https://mathieularose.com/logback-json"/>
+        <updated>2018-05-26T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[How to Debug OpenSSL with Eclipse]]></title>
+        <id>https://mathieularose.com/how-to-debug-openssl-with-eclipse</id>
+        <link href="https://mathieularose.com/how-to-debug-openssl-with-eclipse"/>
+        <updated>2017-12-17T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Decoding CAPTCHAs]]></title>
+        <id>https://mathieularose.com/decoding-captchas</id>
+        <link href="https://mathieularose.com/decoding-captchas"/>
+        <updated>2017-08-25T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Understanding Python Variables]]></title>
+        <id>https://mathieularose.com/python-variables</id>
+        <link href="https://mathieularose.com/python-variables"/>
+        <updated>2015-12-01T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[How Prototype Works in JavaScript]]></title>
+        <id>https://mathieularose.com/javascript-prototype</id>
+        <link href="https://mathieularose.com/javascript-prototype"/>
+        <updated>2014-07-01T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Choosing the Right Data Structures]]></title>
+        <id>https://mathieularose.com/choosing-the-right-data-structures</id>
+        <link href="https://mathieularose.com/choosing-the-right-data-structures"/>
+        <updated>2013-08-01T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Function Composition in Python]]></title>
+        <id>https://mathieularose.com/function-composition-in-python</id>
+        <link href="https://mathieularose.com/function-composition-in-python"/>
+        <updated>2013-01-01T00:00:00.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[How Not to Flatten a List of Lists in Python]]></title>
+        <id>https://mathieularose.com/how-not-to-flatten-a-list-of-lists-in-python</id>
+        <link href="https://mathieularose.com/how-not-to-flatten-a-list-of-lists-in-python"/>
+        <updated>2013-01-01T00:00:00.000Z</updated>
+    </entry>
+</feed>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How to Design and Implement a Plugin Architecture in Python</title>
+
+    <meta property="og:title" content="How to Design and Implement a Plugin Architecture in Python" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2020-07-19T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/plugin-architecture-in-python" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>How to Design and Implement a Plugin Architecture in Python</h1>
+    <p>July 2020</p>
+  </hgroup>
+
+  <p>We tend to think that plugin-based architectures are hard to develop. And that
+is certainly true for many advanced plugin-based architectures such as those for
+browsers. But sometimes we may be looking for a simple yet powerful plugin-based
+architecture. If that's your case, then read on. I'll show you how to design and
+implement one in Python.</p>
+<p>I'll explain how I designed <a href="https://github.com/larose/utt">utt</a>'s plugin system
+and how you can apply the same pattern to your application.</p>
+<h2>A simple plugin system in Python</h2>
+<p>There are two key questions to address in a plugin architecture:</p>
+<ul>
+<li>Plugin discovery: how does the application discover and load plugins?</li>
+<li>Application API: how do the plugins interact with the application?</li>
+</ul>
+<p>In our simple plugin system, these two problems are solved by putting packages
+into specific namespaces. Plugins go into the <code>app.plugins</code> namespace and the
+API under <code>app.api</code>, where <code>app</code> is the name of the application.</p>
+<p>At startup, the application discovers and loads plugins by asking Python all
+packages registered under the <code>app.plugins</code> namespace. So all packages whose
+names match <code>app.plugins.*</code>. And when plugins are loaded by the application,
+they import the application API at <code>app.api</code>.</p>
+<p>For example, if there were two plugins for the application installed on the
+system, foo and bar, they would be located in the <code>app.plugins.foo</code> and
+<code>app.plugins.bar</code> namespaces.</p>
+<p>This package naming convention allows the application and the plugins to know
+about each other, even though they are not necessary maintained and distributed
+by the same person. For example, the application could be maintained in its own
+git repo and distributed under its own package on PyPI, while each plugin can be
+maintained in their own git repo and distributed in their own package on PyPI.</p>
+<p>We can say that the application and the plugins form together a virtual package
+(e.g. <code>app</code>), composed of many physical packages (e.g. <code>app.api</code>,
+<code>app.plugins.foo</code> and <code>app.plugins.bar</code>).</p>
+<p>Here is an example of a namespace hierarchy that follows the package naming
+convention we've just described and who is responsible for providing each
+package:</p>
+<p><img src="plugin-architecture-in-python/plugin-architecture.png" alt=""></p>
+<h2>utt</h2>
+<p>Let's now see how <a href="https://github.com/larose/utt">utt</a> implements such plugin
+system.</p>
+<p>The main package in utt is <code>utt</code>. So as expected, utt's plugins are located
+under the <code>utt.plugins</code> namespace and utt's API under <code>utt.api</code>.</p>
+<h3>Plugin discovery</h3>
+<p>Here is how utt discovers and loads plugins at startup:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">import</span> importlib
+<span class="hljs-keyword">import</span> pkgutil
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">import</span> utt.plugins
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">iter_namespace</span>(<span class="hljs-params">ns_pkg</span>):
+    <span class="hljs-keyword">return</span> pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + <span class="hljs-string">&quot;.&quot;</span>)
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">load_plugins</span>():
+    <span class="hljs-keyword">for</span> _, name, _ <span class="hljs-keyword">in</span> iter_namespace(utt.plugins):
+        importlib.import_module(name)
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">main</span>():
+    load_plugins()
+    ...
+</code></pre>
+<p>The <code>iter_namespace</code> function finds all packages under the <code>ns_pkg</code> namespace
+(i.e. <code>utt.plugins</code>) and the <code>load_plugins</code> function imports them.</p>
+<p>Source: <a href="https://github.com/larose/utt/blob/master/utt/main.py">https://github.com/larose/utt/blob/master/utt/main.py</a></p>
+<h3>Application's API</h3>
+<p>utt exposes its API (currently at v1) under the
+<a href="https://github.com/larose/utt/tree/master/utt/api"><code>utt.api</code></a> namespace:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-comment"># This file contains the classes, functions and constants</span>
+<span class="hljs-comment"># that can be used by plugins.</span>
+
+<span class="hljs-keyword">from</span> ...command <span class="hljs-keyword">import</span> Command
+<span class="hljs-keyword">from</span> ._private <span class="hljs-keyword">import</span> register_command, register_component
+
+...
+</code></pre>
+<p>Source: <a href="https://github.com/larose/utt/blob/master/utt/api/_v1/__init__.py">https://github.com/larose/utt/blob/master/utt/api/_v1/__init__.py</a></p>
+<p>The symbols exported in the file above are the ones that can be used by plugins.
+For example, the following plugin registers a new utt command (foo) through the
+<code>register_command</code> function exported in utt's API:</p>
+<pre class="hljs"><code class="hljs"><span class="hljs-keyword">from</span> utt.api <span class="hljs-keyword">import</span> v1
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">FooHandler</span>:
+    ...
+
+foo_command = v1.Command(name=<span class="hljs-string">&quot;foo&quot;</span>, handler_class=FooHandler, ...)
+
+v1.register_command(foo_command)
+</code></pre>
+<p>Source: <a href="https://github.com/larose/utt/blob/master/test/integration/utt_example_plugin/utt/plugins/foo_command.py">https://github.com/larose/utt/blob/master/test/integration/utt_example_plugin/utt/plugins/foo_command.py</a></p>
+<h2>Conclusion</h2>
+<p>That's basically all you need to know to develop your own plugin architecture in
+Python.</p>
+<p>Note that plugins can also be maintained and distributed within the same git
+repo and PyPI package of the application. This is what utt does for its built-in
+commands: they are just
+<a href="https://github.com/larose/utt/tree/master/utt/plugins">plugins</a>.</p>
+<p>Finally, a technique very useful when developing a plugin architecture is
+<a href="https://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a>.
+Dependency injection allows to easily override certain behaviors at runtime,
+depending on the configuration loaded (think plugins). <a href="https://github.com/larose/utt/blob/master/utt/api/_v1/_private.py">utt heavily uses this
+pattern</a> with
+the help of <a href="https://github.com/larose/cargo">cargo</a>, a dependency injection
+library in Python.</p>
+<h2>References</h2>
+<ul>
+<li><a href="https://packaging.python.org/guides/creating-and-discovering-plugins/">https://packaging.python.org/guides/creating-and-discovering-plugins/</a></li>
+<li><a href="https://github.com/larose/utt">https://github.com/larose/utt</a></li>
+<li><a href="https://github.com/larose/cargo">https://github.com/larose/cargo</a></li>
+</ul>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>

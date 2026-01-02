@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen</title>
+
+    <meta property="og:title" content="Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen" />
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2020-04-05T00:00:00.000Z" />
+
+  <meta property="profile:first_name" content="Mathieu">
+  <meta property="profile:last_name" content="Larose">
+
+
+<meta property="og:url" content="https://mathieularose.com/ubuntu-19-10-on-lenovo-thinkpad-x1-carbon-7th-gen" />
+
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <link rel="stylesheet" href="./main.css" />
+    <link rel="me" href="https://mastodon.social/@mathieularose" />
+    <link
+      href="/atom.xml"
+      rel="alternate"
+      title="Mathieu Larose"
+      type="application/atom+xml"
+    />
+  </head>
+
+  <body class="">
+    <header class="">
+  <h1>Mathieu Larose</h1>
+
+  <nav>
+    <ul>
+      <li><a href="/" class="">Home</a></li>
+      <li><a href="/services" class="">Services</a></li>
+      <li><a href="/projects" class="">Projects</a></li>
+    </ul>
+  </nav>
+</header>
+ 
+
+<main>
+  <hgroup>
+    <h1>Ubuntu 19.10 on Lenovo ThinkPad X1 Carbon 7th Gen</h1>
+    <p>April 2020</p>
+  </hgroup>
+
+  <p>The audio, microphone and wifi don't work out of the box with Ubuntu 19.10 on a
+Lenovo ThinkPad X1 Carbon 7th Gen laptop. Here are the steps I made to fix them.</p>
+<hr>
+<p><em>Update: I upgraded to Ubuntu 20.04 and now everything works with the
+default settings. I'm on kernel 5.4.0-26-generic and reverted my
+changes to <code>/etc/modprobe.d/blacklist.conf</code> and
+<code>/etc/pulse/default.pa</code> (steps 3 and 4 below).</em></p>
+<hr>
+<p>Note 1: Even if I tried to make as little customization as possible to make the
+upgrade easy to Ubuntu 20.04 when it's available, there may be other more
+elegant ways to fix the issues.</p>
+<p>Note 2: The wifi works with kernel 5.3.0-18, which is the kernel that comes by
+default with the Ubuntu installer. However, the wifi doesn't work with the more
+recent kernels installed by Ubuntu 19.10. So if you lose wifi while doing these
+steps, make sure you boot with kernel 5.3.0-18.</p>
+<h2>Step 1: Install the latest kernel available from <a href="http://kernel.ubuntu.com">kernel.ubuntu.com</a></h2>
+<p>Use
+<a href="https://github.com/pimlie/ubuntu-mainline-kernel.sh">ubuntu-mainline-kernel.sh</a>
+to install the latest kernel available from
+<a href="https://kernel.ubuntu.com">kernel.ubuntu.com</a>.</p>
+<p><s>Note that Ubuntu 20.04's kernel (kernel 5.4) doesn't solve the
+issues. So we are forced to install a mainline kernel.</s> Not true. I
+upgraded to Ubuntu 20.04 and it works with kernel 5.4.0-26-generic.</p>
+<h2>Step 2: Upgrade linux-firmware package to Ubuntu 20.04</h2>
+<p>Download and install <a href="https://packages.ubuntu.com/focal/linux-firmware">Ubuntu 20.04's linux-firmware
+package</a>, which is currently
+at version 1.187.</p>
+<h2>Step 3: Blacklist <code>snd_hda_intel</code> and <code>snd_soc_skl</code></h2>
+<p>Add the following lines to <code>/etc/modprobe.d/blacklist.conf</code>:</p>
+<pre class="hljs"><code class="hljs">blacklist snd_hda_intel
+blacklist snd_soc_skl
+</code></pre>
+<h2>Step 4: Update PulseAudio config</h2>
+<p>Add the following lines to <code>/etc/pulse/default.pa</code>:</p>
+<pre class="hljs"><code class="hljs">load-module module-alsa-sink device=hw:0,0 channels=4
+load-module module-alsa-source device=hw:0,7 channels=4
+</code></pre>
+<h2>Step 5: Reboot</h2>
+<p>Reboot and make sure you boot with the kernel installed in step 1.</p>
+
+
+  <div class="notice promotion">
+    <p>Like this article? Get notified of new ones:</p>
+
+    <form
+      action="https://app.convertkit.com/forms/6531879/subscriptions"
+      method="post"
+      data-uid="625243fa5c"
+      data-format="inline"
+      data-version="5"
+    >
+      <input
+        class="px-1 py-1"
+        name="email_address"
+        type="text"
+        placeholder="Email address"
+      />
+      <button
+        type="submit"
+        data-element="submit"
+        class="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+      >
+        Subscribe
+      </button>
+    </form>
+  </div>
+</main>
+ <footer class="">
+  <nav>
+    <ul>
+      <li>
+        ©
+        <a class="contrast" href="/">Mathieu Larose</a>
+      </li>
+      <li>
+        <a class="contrast" href="mailto:mathieu@mathieularose.com">Email</a>
+      </li>
+      <li>
+        <a class="contrast" href="https://www.linkedin.com/in/mathieularose/"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="contrast" href="https://github.com/larose">GitHub</a>
+      </li>
+      <li>
+        <a class="contrast" href="/atom.xml">Atom</a>
+      </li>
+    </ul>
+  </nav>
+</footer>
+
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "e36c8a0587da4db0ac82e9037c3fb192"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
+</html>
